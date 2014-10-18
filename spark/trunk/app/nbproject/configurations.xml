@@ -1,0 +1,877 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="95">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <df root="../../../../../spark" name="0">
+      <df name="core-common-lib">
+        <df name="CC3000_Host_Driver">
+          <in>cc3000_common.c</in>
+          <in>evnt_handler.c</in>
+          <in>hci.c</in>
+          <in>netapp.c</in>
+          <in>nvmem.c</in>
+          <in>security.c</in>
+          <in>socket.c</in>
+          <in>wlan.c</in>
+        </df>
+        <df name="SPARK_Firmware_Driver">
+          <df name="src">
+            <in>cc3000_spi.c</in>
+            <in>debug.c</in>
+            <in>hw_config.c</in>
+            <in>panic.c</in>
+            <in>spi_bus.c</in>
+            <in>sst25vf_spi.c</in>
+            <in>system_stm32f10x.c</in>
+            <in>usb_pwr.c</in>
+          </df>
+        </df>
+        <df name="SPARK_Services">
+          <df name="src">
+            <in>rgbled.c</in>
+          </df>
+        </df>
+        <df name="STM32_USB-FS-Device_Driver">
+          <df name="src">
+            <in>usb_core.c</in>
+            <in>usb_init.c</in>
+            <in>usb_int.c</in>
+            <in>usb_mem.c</in>
+            <in>usb_regs.c</in>
+            <in>usb_sil.c</in>
+          </df>
+        </df>
+        <df name="STM32F10x_StdPeriph_Driver">
+          <df name="src">
+            <in>misc.c</in>
+            <in>stm32f10x_adc.c</in>
+            <in>stm32f10x_bkp.c</in>
+            <in>stm32f10x_can.c</in>
+            <in>stm32f10x_cec.c</in>
+            <in>stm32f10x_crc.c</in>
+            <in>stm32f10x_dac.c</in>
+            <in>stm32f10x_dbgmcu.c</in>
+            <in>stm32f10x_dma.c</in>
+            <in>stm32f10x_exti.c</in>
+            <in>stm32f10x_flash.c</in>
+            <in>stm32f10x_fsmc.c</in>
+            <in>stm32f10x_gpio.c</in>
+            <in>stm32f10x_i2c.c</in>
+            <in>stm32f10x_iwdg.c</in>
+            <in>stm32f10x_pwr.c</in>
+            <in>stm32f10x_rcc.c</in>
+            <in>stm32f10x_rtc.c</in>
+            <in>stm32f10x_sdio.c</in>
+            <in>stm32f10x_spi.c</in>
+            <in>stm32f10x_tim.c</in>
+            <in>stm32f10x_usart.c</in>
+            <in>stm32f10x_wwdg.c</in>
+          </df>
+        </df>
+      </df>
+      <df name="core-communication-lib">
+        <df name="lib">
+          <df name="tropicssl">
+            <df name="library">
+              <in>aes.c</in>
+              <in>bignum.c</in>
+              <in>padlock.c</in>
+              <in>rsa.c</in>
+              <in>sha1.c</in>
+            </df>
+          </df>
+        </df>
+        <df name="src">
+          <in>coap.cpp</in>
+          <in>events.cpp</in>
+          <in>handshake.cpp</in>
+          <in>spark_protocol.cpp</in>
+        </df>
+        <df name="tests">
+          <df name="UnitTest++">
+            <df name="src">
+              <df name="Posix">
+                <in>SignalTranslator.cpp</in>
+                <in>TimeHelpers.cpp</in>
+              </df>
+              <df name="Win32">
+                <in>TimeHelpers.cpp</in>
+              </df>
+              <in>AssertException.cpp</in>
+              <in>Checks.cpp</in>
+              <in>CurrentTest.cpp</in>
+              <in>DeferredTestReporter.cpp</in>
+              <in>DeferredTestResult.cpp</in>
+              <in>MemoryOutStream.cpp</in>
+              <in>ReportAssert.cpp</in>
+              <in>Test.cpp</in>
+              <in>TestDetails.cpp</in>
+              <in>TestList.cpp</in>
+              <in>TestReporter.cpp</in>
+              <in>TestReporterStdout.cpp</in>
+              <in>TestResults.cpp</in>
+              <in>TestRunner.cpp</in>
+              <in>TimeConstraint.cpp</in>
+              <in>XmlTestReporter.cpp</in>
+            </df>
+          </df>
+          <in>ConstructorFixture.cpp</in>
+          <in>Main.cpp</in>
+          <in>TestAES.cpp</in>
+          <in>TestCoAP.cpp</in>
+          <in>TestDescriptor.cpp</in>
+          <in>TestEvents.cpp</in>
+          <in>TestHandshake.cpp</in>
+          <in>TestQueue.cpp</in>
+          <in>TestSparkProtocol.cpp</in>
+          <in>TestStateMachine.cpp</in>
+          <in>TestUserFunctions.cpp</in>
+        </df>
+      </df>
+      <df name="core-firmware">
+        <df name="applications">
+          <df name="tinker">
+            <in>application.cpp</in>
+          </df>
+        </df>
+        <df name="src">
+          <in>application.cpp</in>
+          <in>main.cpp</in>
+          <in>newlib_stubs.cpp</in>
+          <in>spark_utilities.cpp</in>
+          <in>spark_wiring.cpp</in>
+          <in>spark_wiring_eeprom.cpp</in>
+          <in>spark_wiring_i2c.cpp</in>
+          <in>spark_wiring_interrupts.cpp</in>
+          <in>spark_wiring_ipaddress.cpp</in>
+          <in>spark_wiring_print.cpp</in>
+          <in>spark_wiring_random.cpp</in>
+          <in>spark_wiring_servo.cpp</in>
+          <in>spark_wiring_spi.cpp</in>
+          <in>spark_wiring_stream.cpp</in>
+          <in>spark_wiring_string.cpp</in>
+          <in>spark_wiring_tcpclient.cpp</in>
+          <in>spark_wiring_tcpserver.cpp</in>
+          <in>spark_wiring_time.cpp</in>
+          <in>spark_wiring_tone.cpp</in>
+          <in>spark_wiring_udp.cpp</in>
+          <in>spark_wiring_usartserial.cpp</in>
+          <in>spark_wiring_usbserial.cpp</in>
+          <in>spark_wiring_wifi.cpp</in>
+          <in>spark_wlan.cpp</in>
+          <in>stm32_it.cpp</in>
+          <in>usb_desc.cpp</in>
+          <in>usb_endp.cpp</in>
+          <in>usb_istr.cpp</in>
+          <in>usb_prop.cpp</in>
+          <in>wifi_credentials_reader.cpp</in>
+        </df>
+        <df name="tests">
+          <df name="core-v1">
+            <df name="testapp1">
+              <in>LED.cpp</in>
+              <in>application.cpp</in>
+              <in>random.cpp</in>
+            </df>
+          </df>
+          <df name="libraries">
+            <df name="unit-test">
+              <in>FakeStream.cpp</in>
+              <in>FakeStreamBuffer.cpp</in>
+              <in>SparkParty.cpp</in>
+              <in>flashee-eeprom.cpp</in>
+              <in>unit-test.cpp</in>
+            </df>
+          </df>
+          <df name="unit">
+            <in>catch.cpp</in>
+            <in>character.cpp</in>
+            <in>main.cpp</in>
+            <in>random.cpp</in>
+            <in>rgbled.cpp</in>
+            <in>string.cpp</in>
+          </df>
+        </df>
+      </df>
+    </df>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>../../../../../spark/core-firmware/build/makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <sourceFolderFilter>^(nbproject)$</sourceFolderFilter>
+  <sourceRootList>
+    <Elem>../../../../../spark</Elem>
+  </sourceRootList>
+  <projectmakefile>../../../../../spark/core-firmware/build/makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <compilerSet>GCC_ARM_4_8|GNU</compilerSet>
+        <dependencyChecking>false</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <codeAssistance>
+      </codeAssistance>
+      <makefileType>
+        <makeTool>
+          <buildCommandWorkingDir>../../../../../spark/core-firmware/build</buildCommandWorkingDir>
+          <buildCommand>${MAKE} -f makefile</buildCommand>
+          <cleanCommand>${MAKE} -f makefile clean</cleanCommand>
+          <executablePath></executablePath>
+        </makeTool>
+      </makefileType>
+      <item path="../../../../../spark/core-common-lib/CC3000_Host_Driver/cc3000_common.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/CC3000_Host_Driver/evnt_handler.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/CC3000_Host_Driver/hci.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/CC3000_Host_Driver/netapp.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/CC3000_Host_Driver/nvmem.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/CC3000_Host_Driver/security.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/CC3000_Host_Driver/socket.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/CC3000_Host_Driver/wlan.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/SPARK_Firmware_Driver/src/cc3000_spi.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/SPARK_Firmware_Driver/src/debug.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/SPARK_Firmware_Driver/src/hw_config.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/SPARK_Firmware_Driver/src/panic.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/SPARK_Firmware_Driver/src/spi_bus.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/SPARK_Firmware_Driver/src/sst25vf_spi.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/SPARK_Firmware_Driver/src/system_stm32f10x.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/SPARK_Firmware_Driver/src/usb_pwr.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/SPARK_Services/src/rgbled.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/misc.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_adc.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_bkp.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_can.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_cec.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_crc.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_dac.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_dbgmcu.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_dma.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_exti.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_flash.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_fsmc.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_gpio.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_i2c.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_iwdg.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_pwr.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_rcc.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_rtc.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_sdio.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_spi.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_tim.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_usart.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32F10x_StdPeriph_Driver/src/stm32f10x_wwdg.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32_USB-FS-Device_Driver/src/usb_core.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32_USB-FS-Device_Driver/src/usb_init.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32_USB-FS-Device_Driver/src/usb_int.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32_USB-FS-Device_Driver/src/usb_mem.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32_USB-FS-Device_Driver/src/usb_regs.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-common-lib/STM32_USB-FS-Device_Driver/src/usb_sil.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/lib/tropicssl/library/aes.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/lib/tropicssl/library/bignum.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/lib/tropicssl/library/padlock.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/lib/tropicssl/library/rsa.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/lib/tropicssl/library/sha1.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/src/coap.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/src/events.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/src/handshake.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/src/spark_protocol.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/ConstructorFixture.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/Main.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/TestAES.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/TestCoAP.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/TestDescriptor.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/TestEvents.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/TestHandshake.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/TestQueue.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/TestSparkProtocol.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/TestStateMachine.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/TestUserFunctions.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/AssertException.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/Checks.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/CurrentTest.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/DeferredTestReporter.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/DeferredTestResult.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/MemoryOutStream.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/Posix/SignalTranslator.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/Posix/TimeHelpers.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/ReportAssert.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/Test.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/TestDetails.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/TestList.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/TestReporter.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/TestReporterStdout.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/TestResults.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/TestRunner.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/TimeConstraint.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/Win32/TimeHelpers.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-communication-lib/tests/UnitTest++/src/XmlTestReporter.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/applications/tinker/application.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/application.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/main.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/newlib_stubs.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_utilities.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_eeprom.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_i2c.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_interrupts.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_ipaddress.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_print.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_random.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_servo.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_spi.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_stream.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_string.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_tcpclient.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_tcpserver.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_time.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_tone.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_udp.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_usartserial.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_usbserial.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wiring_wifi.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/spark_wlan.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/stm32_it.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/usb_desc.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/usb_endp.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/usb_istr.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/usb_prop.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/wifi_credentials_reader.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/core-v1/testapp1/LED.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/core-v1/testapp1/application.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/core-v1/testapp1/random.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/libraries/unit-test/FakeStream.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/libraries/unit-test/FakeStreamBuffer.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/libraries/unit-test/SparkParty.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/libraries/unit-test/flashee-eeprom.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/libraries/unit-test/unit-test.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/unit/catch.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/unit/character.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/unit/main.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/unit/random.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/unit/rgbled.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/tests/unit/string.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>
