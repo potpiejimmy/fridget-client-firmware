@@ -8,8 +8,7 @@
 #ifndef _com_myfridget_LLREMOTELOG_H_
 #define	_com_myfridget_LLREMOTELOG_H_
 
-#include "spark_wiring_tcpclient.h"
-#include "spark_wiring_ipaddress.h"
+#include "LLWebRequest.h"
 
 namespace com_myfridget
 {
@@ -22,10 +21,7 @@ namespace com_myfridget
         virtual void log(const char* msg);
         
     private:
-        const char* host;
-        IPAddress ipAddress;
-        int port;
-        TCPClient client;
+        LLWebRequest webRequester;
     };
 }
 

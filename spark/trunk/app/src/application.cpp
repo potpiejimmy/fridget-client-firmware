@@ -28,9 +28,15 @@
 
 #include "LLRemoteLog.h"
 
+#define SERVER_HOST IPAddress(192,168,178,32)
+#define SERVER_PORT 8080
+//#define SERVER_HOST "www.doogetha.com"
+//#define SERVER_PORT 80
+
 using namespace com_myfridget;
 
-LLRemoteLog log(IPAddress(192,168,178,32), 8080);
+LLRemoteLog log(SERVER_HOST, SERVER_PORT);
+LLWebRequest requester(SERVER_HOST, SERVER_PORT);
 
 /* Function prototypes -------------------------------------------------------*/
 void blinkLED(int on, int off);
@@ -51,21 +57,32 @@ void setup()
 void loop()
 {
     if (WiFi.ready()) {
+        
+        // wait for IP to be set:
+        while (!WiFi.localIP().raw_address()[0]) delay(100);
+        
+        // we are connected, send a log msg to the server:
         char msg[128];
         uint8_t* ipa = WiFi.localIP().raw_address();
         snprintf(msg, 128, "Awake and connected to %s, IP %d.%d.%d.%d", WiFi.SSID(), (int)ipa[0], (int)ipa[1], (int)ipa[2], (int)ipa[3]);
         log.log(msg); 
+        
+        // now, just for fun, request a value from the server:
+        log.log(">>> Requesting the current date from the server");
+        char serverTime[128];
+        requester.request("GET", "/fridget/res/debug/?param=servertime", NULL, serverTime, 128);
+        snprintf(msg, 128, "<<< Received from server: %s", serverTime);
+        log.log(msg);
+        
         // turn LED on 5 sec, then deep-sleep
         blinkLED(5000,0);
         WiFi.disconnect();
         Spark.sleep(SLEEP_MODE_DEEP, 20);
     } else if (WiFi.connecting()) {
-        // fast blinking while connecting
-        blinkLED(128,128);
+        // do nothing while connecting
+        //blinkLED(128,128);
     } else {
-        // just woke up, blink once to say hello
-        blinkLED(1000,500);
-        // then connect:
+        // if not connecting, connect:
         WiFi.connect();
     }
 }
