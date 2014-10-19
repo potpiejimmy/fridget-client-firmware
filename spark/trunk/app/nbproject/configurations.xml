@@ -133,7 +133,11 @@
             <in>application.cpp</in>
           </df>
         </df>
+        <df name="inc">
+          <in>LLRemoteLog.h</in>
+        </df>
         <df name="src">
+          <in>LLRemoteLog.cpp</in>
           <in>application.cpp</in>
           <in>main.cpp</in>
           <in>newlib_stubs.cpp</in>
@@ -651,6 +655,16 @@
             ex="false"
             tool="1"
             flavor2="4">
+      </item>
+      <item path="../../../../../spark/core-firmware/inc/LLRemoteLog.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/LLRemoteLog.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="../../../../../spark/core-firmware/src/application.cpp"
             ex="false"
