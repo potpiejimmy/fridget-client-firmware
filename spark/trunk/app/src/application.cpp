@@ -28,10 +28,11 @@
 
 #include "LLRemoteLog.h"
 
-#define SERVER_HOST IPAddress(192,168,178,32)
-#define SERVER_PORT 8080
+//#define SERVER_HOST IPAddress(192,168,178,32)
+//#define SERVER_PORT 8080
 //#define SERVER_HOST "www.doogetha.com"
-//#define SERVER_PORT 80
+#define SERVER_HOST IPAddress(85,214,223,69)
+#define SERVER_PORT 80
 
 #define MSG_BUF_SIZE 128
 

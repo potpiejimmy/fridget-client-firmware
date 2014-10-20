@@ -28,7 +28,7 @@ namespace com_myfridget
             char req[128];
             snprintf(req, 128, "%s %s HTTP/1.0", httpMethod, url);
             client.println(req);
-            //client.println("Host: www.doogetha.com");
+            client.println("Host: www.doogetha.com");
             snprintf(req, 128, "Content-Length: %d", contentLength);
             client.println(req);
             client.println();

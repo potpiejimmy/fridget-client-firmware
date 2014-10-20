@@ -223,7 +223,7 @@
           <buildCommandWorkingDir>../../../../../spark/core-firmware/build</buildCommandWorkingDir>
           <buildCommand>${MAKE} -f makefile</buildCommand>
           <cleanCommand>${MAKE} -f makefile clean</cleanCommand>
-          <executablePath></executablePath>
+          <executablePath>/opt/local/bin/dfu-util</executablePath>
         </makeTool>
       </makefileType>
       <item path="../../../../../spark/core-common-lib/CC3000_Host_Driver/cc3000_common.c"
