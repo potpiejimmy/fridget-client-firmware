@@ -33,23 +33,33 @@
 //#define SERVER_HOST "www.doogetha.com"
 //#define SERVER_PORT 80
 
+#define MSG_BUF_SIZE 128
+
 using namespace com_myfridget;
 
+/* Set up remote logging */
 LLRemoteLog log(SERVER_HOST, SERVER_PORT);
+/* Set up web requester */
 LLWebRequest requester(SERVER_HOST, SERVER_PORT);
+/* message buffer */
+char _msgBuf[MSG_BUF_SIZE];
 
 /* Function prototypes -------------------------------------------------------*/
 void blinkLED(int on, int off);
 void setupSerial();
+void performOnlineTask();
 
-
+/* MANUAL: not connecting to Spark cloud, running user-code loop immediately
+ * on power-up. */
 SYSTEM_MODE(MANUAL);
 
 
 /* This function is called once at start up ----------------------------------*/
 void setup()
 {
+    /* Activate the LED output PIN */
     pinMode(D7, OUTPUT);
+    /* For serial debugging only: */
 //  setupSerial();    
 }
 
@@ -57,27 +67,16 @@ void setup()
 void loop()
 {
     if (WiFi.ready()) {
+
+        // WiFi connected:
+        log.log("WiFi ready.");
         
-        // wait for IP to be set:
-        while (!WiFi.localIP().raw_address()[0]) delay(100);
+        // As soon as IP is set, perform online task:
+        if (WiFi.localIP().raw_address()[0])
+        {
+            performOnlineTask();
+        }
         
-        // we are connected, send a log msg to the server:
-        char msg[128];
-        uint8_t* ipa = WiFi.localIP().raw_address();
-        snprintf(msg, 128, "Awake and connected to %s, IP %d.%d.%d.%d", WiFi.SSID(), (int)ipa[0], (int)ipa[1], (int)ipa[2], (int)ipa[3]);
-        log.log(msg); 
-        
-        // now, just for fun, request a value from the server:
-        log.log(">>> Requesting the current date from the server");
-        char serverTime[128];
-        requester.request("GET", "/fridget/res/debug/?param=servertime", NULL, serverTime, 128);
-        snprintf(msg, 128, "<<< Received from server: %s", serverTime);
-        log.log(msg);
-        
-        // turn LED on 5 sec, then deep-sleep
-        blinkLED(5000,0);
-        WiFi.disconnect();
-        Spark.sleep(SLEEP_MODE_DEEP, 20);
     } else if (WiFi.connecting()) {
         // do nothing while connecting
         //blinkLED(128,128);
@@ -85,6 +84,46 @@ void loop()
         // if not connecting, connect:
         WiFi.connect();
     }
+}
+
+void logOnline()
+{
+    // we are connected, send a log msg to the server:
+    uint8_t* ipa = WiFi.localIP().raw_address();
+    snprintf(_msgBuf, MSG_BUF_SIZE, "Awake and connected to %s, IP %d.%d.%d.%d", WiFi.SSID(), (int)ipa[0], (int)ipa[1], (int)ipa[2], (int)ipa[3]);
+    log.log(_msgBuf); 
+}
+
+int getServerParam(const char* param)
+{
+    char readBuf[16];
+    
+    snprintf(_msgBuf, MSG_BUF_SIZE, ">>> Requesting parameter '%s'", param);
+    log.log(_msgBuf);
+    
+    snprintf(_msgBuf, MSG_BUF_SIZE, "/fridget/res/debug/?serial=%s&param=%s", Spark.deviceID().c_str(), param);
+    requester.request("GET", _msgBuf, NULL, readBuf, 16);
+    
+    snprintf(_msgBuf, MSG_BUF_SIZE, "<<< Received from server: %s", readBuf);
+    log.log(_msgBuf);
+    
+    return atoi(readBuf);
+}
+
+void performOnlineTask()
+{
+    // say hello to the server, log IP and SSID
+    logOnline();
+    
+    int wakeTime = getServerParam("waketime");
+    int sleepTime = getServerParam("sleeptime");
+
+    // turn LED on for wakeTime seconds, then deep-sleep for sleepTime seconds
+    blinkLED(wakeTime * 1000, 0);
+    log.log("Going to sleep.");
+    
+    WiFi.disconnect();
+    Spark.sleep(SLEEP_MODE_DEEP, sleepTime);
 }
 
 void setupSerial()

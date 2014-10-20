@@ -20,6 +20,8 @@ namespace com_myfridget
     
     void LLWebRequest::request(const char* httpMethod, const char* url, const char* contentData, char* readBuffer, size_t readBufferLength)
     {
+        if (readBuffer) readBuffer[0] = 0; // terminate result buffer in case of failure
+        
         if (host ? client.connect(host, port) : client.connect(ipAddress, port))
         {
             int contentLength = contentData ? strlen(contentData) + 2 : 0;
@@ -48,7 +50,12 @@ namespace com_myfridget
                 if (detected == strlen(HEADER_END))
                 {
                     // read content data:
-                    int bytesRead = client.readBytes(readBuffer, readBufferLength - 1);
+                    int bytesRead = 0;
+                    while (client.connected() && bytesRead < readBufferLength - 1) {
+                        int readNow = client.readBytes(readBuffer + bytesRead, readBufferLength - 1 - bytesRead);
+                        if (readNow <= 0) break;
+                        bytesRead += readNow;
+                    }
                     readBuffer[bytesRead] = 0; // Terminate read buffer with \0
                 }
             }
