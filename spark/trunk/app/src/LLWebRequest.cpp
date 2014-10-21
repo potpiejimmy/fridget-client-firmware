@@ -18,9 +18,9 @@ namespace com_myfridget
     {
     }
     
-    BOOL LLWebRequest::request(const char* httpMethod, const char* url, const char* contentData, char* readBuffer, size_t readBufferLength)
+    bool LLWebRequest::request(const char* httpMethod, const char* url, const char* contentData, char* readBuffer, size_t readBufferLength)
     {
-        BOOL result = FALSE;
+        bool result = FALSE;
         if (readBuffer) readBuffer[0] = 0; // terminate result buffer in case of failure
         
         if (host ? client.connect(host, port) : client.connect(ipAddress, port))

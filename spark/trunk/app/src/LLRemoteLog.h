@@ -18,8 +18,8 @@ namespace com_myfridget
         LLRemoteLog(IPAddress ipAddress, int port);
         LLRemoteLog(const char* host, int port);
         
-        virtual BOOL log(const char* msg);
-        virtual BOOL log(const String msg);
+        virtual bool log(const char* msg);
+        virtual bool log(const String msg);
         
     private:
         LLWebRequest webRequester;

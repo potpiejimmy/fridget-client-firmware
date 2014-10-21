@@ -20,7 +20,7 @@ namespace com_myfridget
     {
     }
     
-    BOOL LLRemoteLog::log(const char* msg)
+    bool LLRemoteLog::log(const char* msg)
     {
         char url[128];
         
@@ -28,7 +28,7 @@ namespace com_myfridget
         return webRequester.request("POST", url, msg, NULL, 0);
     }
     
-    BOOL LLRemoteLog::log(const String msg)
+    bool LLRemoteLog::log(const String msg)
     {
         return log(msg.c_str());
     }

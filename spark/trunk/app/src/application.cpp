@@ -30,7 +30,7 @@
 
 // SERIAL DEBUGGING - if you enable this, you must connect via 9600 8N1 terminal
 // and hit any key so that the core can start up
-#define _SERIAL_DEBUGGING_
+//#define _SERIAL_DEBUGGING_
 
 // user states
 #define USER_STATE_OFFLINE                0
@@ -112,7 +112,7 @@ void loop()
     case USER_STATE_CONNECTED_AWAITING_IP:
         // wait until IP address is set
         if (WiFi.localIP().raw_address()[0]) {
-            userState = USER_STATE_ONLINE
+            userState = USER_STATE_ONLINE;
             debug("State: USER_STATE_ONLINE");
             onOnline();
         }
@@ -142,15 +142,41 @@ int getServerParam(const char* param, int def)
     return def;
 }
 
+bool establishServerConnection()
+{
+    int numberOfRetries = 0;
+    uint8_t* ipa = WiFi.localIP().raw_address();
+    
+    /* 
+     * When using Domain Names instead of IP addresses for TCPClient,
+     * the first connection may fail due to a delayed name resolution.
+     * So we try to send the initial message to the server twice.
+     */
+
+    while (numberOfRetries++ < 3) {
+        // say hello to the server, log IP and SSID
+        if (log.log(String("*** Connected to ") + WiFi.SSID() + ", IP " + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3] + " ***")) {
+            return TRUE;
+        } else {
+            debug(String("Could not connect to ") + SERVER_HOST + "(" + numberOfRetries + ")");
+        }
+        delay(100);
+    }
+    return FALSE;
+}
+
 void onOnline()
 {
-    // say hello to the server, log IP and SSID
-    if (!log.log(String("Connected to ") + WiFi.SSID() + ", IP " + WiFi.localIP())) {
-        debug(String("Sorry, could not connect to ") + SERVER_HOST);
+    int connectMode = USER_CONNECT_MODE_CLOUD_ON;
+    
+    if (establishServerConnection()) {
+        debug(String("Connected to ") + SERVER_HOST);
+        connectMode = getServerParam("connectmode", USER_CONNECT_MODE_CLOUD_ON);
+    } else {
+        debug("Server not available, connecting to cloud.");
     }
     
-    int connectMode = getServerParam("connectmode", USER_CONNECT_MODE_CLOUD_ON);
-    if (connectMode == USER_CONNECT_MODE_CLOUD_ON) 
+    if (connectMode == USER_CONNECT_MODE_CLOUD_ON)
     {
         // Connecting cloud:
         log.log("Connecting to cloud...");

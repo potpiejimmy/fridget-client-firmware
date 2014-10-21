@@ -19,7 +19,7 @@ namespace com_myfridget
         LLWebRequest(IPAddress ipAddress, int port);
         LLWebRequest(const char* host, int port);
         
-        virtual BOOL request(const char* httpMethod, const char* url, const char* contentData, char* readBuffer, size_t readBufferLength);
+        virtual bool request(const char* httpMethod, const char* url, const char* contentData, char* readBuffer, size_t readBufferLength);
         
     private:
         const char* host;
