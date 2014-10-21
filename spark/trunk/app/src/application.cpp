@@ -28,13 +28,24 @@
 
 #include "LLRemoteLog.h"
 
+// SERIAL DEBUGGING - if you enable this, you must connect via 9600 8N1 terminal
+// and hit any key so that the core can start up
+#define _SERIAL_DEBUGGING_
+
+// user states
+#define USER_STATE_OFFLINE                0
+#define USER_STATE_CONNECTING             1
+#define USER_STATE_CONNECTED_AWAITING_IP  2
+#define USER_STATE_ONLINE                 3
+
+// connect modes (cloud on/off)
+#define USER_CONNECT_MODE_CLOUD_ON   1
+#define USER_CONNECT_MODE_CLOUD_OFF  2
+
 //#define SERVER_HOST IPAddress(192,168,178,32)
 //#define SERVER_PORT 8080
-//#define SERVER_HOST "www.doogetha.com"
-#define SERVER_HOST IPAddress(85,214,223,69)
+#define SERVER_HOST "www.doogetha.com"
 #define SERVER_PORT 80
-
-#define MSG_BUF_SIZE 128
 
 using namespace com_myfridget;
 
@@ -42,13 +53,14 @@ using namespace com_myfridget;
 LLRemoteLog log(SERVER_HOST, SERVER_PORT);
 /* Set up web requester */
 LLWebRequest requester(SERVER_HOST, SERVER_PORT);
-/* message buffer */
-char _msgBuf[MSG_BUF_SIZE];
+/* The current user state */
+int userState;
 
 /* Function prototypes -------------------------------------------------------*/
 void blinkLED(int on, int off);
-void setupSerial();
-void performOnlineTask();
+void debug(const char* msg);
+void debug(const String msg);
+void onOnline();
 
 /* MANUAL: not connecting to Spark cloud, running user-code loop immediately
  * on power-up. */
@@ -58,66 +70,97 @@ SYSTEM_MODE(MANUAL);
 /* This function is called once at start up ----------------------------------*/
 void setup()
 {
+    /* start offline */
+    userState = USER_STATE_OFFLINE;
+
     /* Activate the LED output PIN */
     pinMode(D7, OUTPUT);
+
+#ifdef _SERIAL_DEBUGGING_
     /* For serial debugging only: */
-//  setupSerial();    
+    // Make sure your Serial Terminal app is closed before powering your Core
+    Serial.begin(9600);
+#endif
 }
 
 /* This function loops forever --------------------------------------------*/
 void loop()
 {
-    if (WiFi.ready()) {
-
-        // WiFi connected:
-        log.log("WiFi ready.");
-        
-        // As soon as IP is set, perform online task:
-        if (WiFi.localIP().raw_address()[0])
-        {
-            performOnlineTask();
-        }
-        
-    } else if (WiFi.connecting()) {
-        // do nothing while connecting
-        //blinkLED(128,128);
-    } else {
-        // if not connecting, connect:
+    switch (userState)
+    {
+    case USER_STATE_OFFLINE:
+#ifdef _SERIAL_DEBUGGING_
+        // Now open your Serial Terminal, and hit any key to continue!
+        if (!Serial.available()) return; // do nothing, wait for key press
+#endif
+        debug("Core up.");
+        // first, connect to WiFi:
         WiFi.connect();
+        userState = USER_STATE_CONNECTING;
+        debug("State: USER_STATE_CONNECTING");
+        break;
+
+    case USER_STATE_CONNECTING:
+        // do nothing while connecting, wait for ready
+        //blinkLED(128,128);
+        if (WiFi.ready()) {
+            userState = USER_STATE_CONNECTED_AWAITING_IP;
+            debug("State: USER_STATE_CONNECTED_AWAITING_IP");
+        }
+        break;
+    
+    case USER_STATE_CONNECTED_AWAITING_IP:
+        // wait until IP address is set
+        if (WiFi.localIP().raw_address()[0]) {
+            userState = USER_STATE_ONLINE
+            debug("State: USER_STATE_ONLINE");
+            onOnline();
+        }
+        break;
+        
+    case USER_STATE_ONLINE:
+        // for now, do nothing in online loop
+        break;
     }
 }
 
-void logOnline()
-{
-    // we are connected, send a log msg to the server:
-    uint8_t* ipa = WiFi.localIP().raw_address();
-    snprintf(_msgBuf, MSG_BUF_SIZE, "Awake and connected to %s, IP %d.%d.%d.%d", WiFi.SSID(), (int)ipa[0], (int)ipa[1], (int)ipa[2], (int)ipa[3]);
-    log.log(_msgBuf); 
-}
-
-int getServerParam(const char* param)
+int getServerParam(const char* param, int def)
 {
     char readBuf[16];
+    char url[128];
     
-    snprintf(_msgBuf, MSG_BUF_SIZE, ">>> Requesting parameter '%s'", param);
-    log.log(_msgBuf);
+    log.log(String(">>> Requesting parameter ") + param);
     
-    snprintf(_msgBuf, MSG_BUF_SIZE, "/fridget/res/debug/?serial=%s&param=%s", Spark.deviceID().c_str(), param);
-    requester.request("GET", _msgBuf, NULL, readBuf, 16);
-    
-    snprintf(_msgBuf, MSG_BUF_SIZE, "<<< Received from server: %s", readBuf);
-    log.log(_msgBuf);
-    
-    return atoi(readBuf);
+    snprintf(url, 128, "/fridget/res/debug/?serial=%s&param=%s", Spark.deviceID().c_str(), param);
+    if (requester.request("GET", url, NULL, readBuf, 16))
+    {
+        log.log(String("<<< Received from server: ") + readBuf);
+        int result = atoi(readBuf);
+        if (result != 0) return result;
+    }
+    // failed, return default:
+    return def;
 }
 
-void performOnlineTask()
+void onOnline()
 {
     // say hello to the server, log IP and SSID
-    logOnline();
+    if (!log.log(String("Connected to ") + WiFi.SSID() + ", IP " + WiFi.localIP())) {
+        debug(String("Sorry, could not connect to ") + SERVER_HOST);
+    }
     
-    int wakeTime = getServerParam("waketime");
-    int sleepTime = getServerParam("sleeptime");
+    int connectMode = getServerParam("connectmode", USER_CONNECT_MODE_CLOUD_ON);
+    if (connectMode == USER_CONNECT_MODE_CLOUD_ON) 
+    {
+        // Connecting cloud:
+        log.log("Connecting to cloud...");
+        Spark.connect();
+        log.log("Connected.");
+        return;
+    }
+    
+    int wakeTime = getServerParam("waketime", 5);
+    int sleepTime = getServerParam("sleeptime", 30);
 
     // turn LED on for wakeTime seconds, then deep-sleep for sleepTime seconds
     blinkLED(wakeTime * 1000, 0);
@@ -127,25 +170,24 @@ void performOnlineTask()
     Spark.sleep(SLEEP_MODE_DEEP, sleepTime);
 }
 
-void setupSerial()
-{
-// -----
-  // Make sure your Serial Terminal app is closed before powering your Core
-  Serial.begin(9600);
-  // Now open your Serial Terminal, and hit any key to continue!
-  while(!Serial.available()) SPARK_WLAN_Loop();
-
-  Serial.println(WiFi.localIP());
-  Serial.println(WiFi.subnetMask());
-  Serial.println(WiFi.gatewayIP());
-  Serial.println(WiFi.SSID());
-// ------    
-}
-
 void blinkLED(int on, int off)
 {
     digitalWrite(D7, HIGH);   // Turn ON the LED pins
     delay(on);
     digitalWrite(D7, LOW);    // Turn OFF the LED pins
     delay(off);
+}
+
+void debug(const char* msg)
+{
+#ifdef _SERIAL_DEBUGGING_
+    Serial.println(msg);
+#endif
+}
+
+void debug(const String msg)
+{
+#ifdef _SERIAL_DEBUGGING_
+    Serial.println(msg);
+#endif
 }

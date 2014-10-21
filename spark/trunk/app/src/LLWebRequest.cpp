@@ -18,8 +18,9 @@ namespace com_myfridget
     {
     }
     
-    void LLWebRequest::request(const char* httpMethod, const char* url, const char* contentData, char* readBuffer, size_t readBufferLength)
+    BOOL LLWebRequest::request(const char* httpMethod, const char* url, const char* contentData, char* readBuffer, size_t readBufferLength)
     {
+        BOOL result = FALSE;
         if (readBuffer) readBuffer[0] = 0; // terminate result buffer in case of failure
         
         if (host ? client.connect(host, port) : client.connect(ipAddress, port))
@@ -57,22 +58,19 @@ namespace com_myfridget
                         bytesRead += readNow;
                     }
                     readBuffer[bytesRead] = 0; // Terminate read buffer with \0
+                    result = TRUE;
                 }
+            }
+            else
+            {
+                // okay, not expecting any result
+                result = TRUE;
             }
             // read the rest (if any) until server disconnects
             while (client.connected()) client.read();
             client.stop();
         }
-        else
-        {
-            for (int i=0; i<5; i++)
-            {
-                digitalWrite(D7, HIGH);   // Turn ON the LED pins
-                delay(1000);
-                digitalWrite(D7, LOW);    // Turn OFF the LED pins
-                delay(1000);
-            }
-        }
+        return result;
     }
 
 }

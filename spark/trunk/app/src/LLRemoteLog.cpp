@@ -20,12 +20,17 @@ namespace com_myfridget
     {
     }
     
-    void LLRemoteLog::log(const char* msg)
+    BOOL LLRemoteLog::log(const char* msg)
     {
         char url[128];
         
         snprintf(url, 128, "/fridget/res/debug/?serial=%s", Spark.deviceID().c_str());
-        webRequester.request("POST", url, msg, NULL, 0);
+        return webRequester.request("POST", url, msg, NULL, 0);
+    }
+    
+    BOOL LLRemoteLog::log(const String msg)
+    {
+        return log(msg.c_str());
     }
 
 }

@@ -6,7 +6,7 @@
  */
 
 #ifndef _com_myfridget_LLWEBREQUEST_H_
-#define	_com_myfridget_LLWEBREQUEST_H_
+#define    _com_myfridget_LLWEBREQUEST_H_
 
 #include "spark_wiring_tcpclient.h"
 #include "spark_wiring_ipaddress.h"
@@ -19,7 +19,7 @@ namespace com_myfridget
         LLWebRequest(IPAddress ipAddress, int port);
         LLWebRequest(const char* host, int port);
         
-        virtual void request(const char* httpMethod, const char* url, const char* contentData, char* readBuffer, size_t readBufferLength);
+        virtual BOOL request(const char* httpMethod, const char* url, const char* contentData, char* readBuffer, size_t readBufferLength);
         
     private:
         const char* host;
@@ -29,5 +29,5 @@ namespace com_myfridget
     };
 }
 
-#endif	/* _com_myfridget_LLWEBREQUEST_H_ */
+#endif    /* _com_myfridget_LLWEBREQUEST_H_ */
 
