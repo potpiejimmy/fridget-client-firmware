@@ -24,7 +24,7 @@ namespace com_myfridget
     {
         char url[128];
         
-        snprintf(url, 128, "/fridget/res/debug/?serial=%s", Spark.deviceID().c_str());
+        snprintf(url, 128, "/fridget/res/debug/%s", Spark.deviceID().c_str());
         return webRequester.request("POST", url, msg, NULL, 0);
     }
     
