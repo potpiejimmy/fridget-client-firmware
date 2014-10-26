@@ -14,7 +14,7 @@
 namespace com_myfridget
 {
     void LLFlashUtil::flash(const uint8_t *pBuffer, uint32_t address, uint32_t len) {
-        sFLASH_EraseSector(address);
+        sFLASH_EraseSector(FLASH_USER_MEMORY_OFFSET + address);
         sFLASH_WriteBuffer(pBuffer, FLASH_USER_MEMORY_OFFSET + address, len);
     }
     
