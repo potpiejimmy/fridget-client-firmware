@@ -30,7 +30,7 @@
 
 // SERIAL DEBUGGING - if you enable this, you must connect via 9600 8N1 terminal
 // and hit any key so that the core can start up
-//#define _SERIAL_DEBUGGING_
+#define _SERIAL_DEBUGGING_
 
 // user states
 #define USER_STATE_OFFLINE                0
@@ -98,7 +98,10 @@ void loop()
     case USER_STATE_OFFLINE:
 #ifdef _SERIAL_DEBUGGING_
         // Now open your Serial Terminal, and hit any key to continue!
-        if (!Serial.available()) return; // do nothing, wait for key press
+        if (!Serial.available()) {
+            blinkLED(96,96); // flicker LED while waiting
+            return; // do nothing, wait for key press
+        }
 #endif
         debug("Core up.");
         cycleLen = EEPROM.read(0);
@@ -242,9 +245,13 @@ void wakeAndSleep()
 
 void blinkLED(int on, int off)
 {
+#ifndef RGB_NOTIFICATIONS_OFF
     digitalWrite(D7, HIGH);   // Turn ON the LED pins
+#endif
     delay(on);
+#ifndef RGB_NOTIFICATIONS_OFF
     digitalWrite(D7, LOW);    // Turn OFF the LED pins
+#endif
     delay(off);
 }
 
