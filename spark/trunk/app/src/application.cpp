@@ -27,10 +27,12 @@
 #include "application.h"
 
 #include "LLRemoteLog.h"
+#include "LLWebRequest.h"
+#include "LLFlashUtil.h"
 
 // SERIAL DEBUGGING - if you enable this, you must connect via 9600 8N1 terminal
 // and hit any key so that the core can start up
-#define _SERIAL_DEBUGGING_
+//#define _SERIAL_DEBUGGING_
 
 // user states
 #define USER_STATE_OFFLINE                0
@@ -50,6 +52,8 @@
 #define SERVER_HOST_DEBUGNAME "www.doogetha.com"
 #define SERVER_PORT 80
 
+#define _BUF_SIZE 4000
+
 using namespace com_myfridget;
 
 /* Set up remote logging */
@@ -58,6 +62,8 @@ LLRemoteLog log(SERVER_HOST, SERVER_PORT);
 LLWebRequest requester(SERVER_HOST, SERVER_PORT);
 /* The current user state */
 int userState;
+/* Read buffer */
+char _buf[_BUF_SIZE];
 
 /* Function prototypes -------------------------------------------------------*/
 void blinkLED(int on, int off);
@@ -65,6 +71,7 @@ void debug(const char* msg);
 void debug(const String msg);
 void onOnline();
 void wakeAndSleep();
+void flashTestImage();
 
 /* MANUAL: not connecting to Spark cloud, running user-code loop immediately
  * on power-up. */
@@ -138,6 +145,8 @@ void loop()
         break;
         
     case USER_STATE_ONLINE:
+        // flash the test image
+        flashTestImage();
         // perform wake and sleep
         wakeAndSleep();
         break;
@@ -241,6 +250,43 @@ void wakeAndSleep()
     
     WiFi.disconnect();
     Spark.sleep(SLEEP_MODE_DEEP, sleepTime);
+}
+
+void flashTestImage()
+{
+    char url[128];
+    
+    if (getServerParam("flashimage", 0))
+    {
+        log.log("Requesting image data and writing to flash...");
+        snprintf(url, 128, "/fridget/res/img/%s/", Spark.deviceID().c_str());
+        if (requester.sendRequest("GET", url, NULL))
+        {
+            int epdSize = 30000; // XXX
+            int readSoFar = 0;
+            if (requester.readHeaders())
+            {
+                while (readSoFar < epdSize) {
+                    int shouldRead = epdSize - readSoFar;
+                    if (shouldRead > _BUF_SIZE) shouldRead = _BUF_SIZE;
+                    debug(String("Reading image data [") + readSoFar + "-" + (readSoFar + shouldRead - 1) + "]");
+                    int readNow = requester.readAll(_buf, shouldRead);
+                    if (readNow != shouldRead) {
+                        debug(String("Failed, received only ") + readNow);
+                        break;
+                    }
+                    // okay, burn it
+                    debug("Writing to flash.");
+                    LLFlashUtil::flash((const uint8_t*)_buf, readSoFar, readNow);
+                    debug("Done.");
+                    readSoFar += readNow;
+                }
+            }
+            requester.stop();
+            log.log(String("Wrote ") + readSoFar + " bytes to flash.");
+        }
+    }
+    
 }
 
 void blinkLED(int on, int off)

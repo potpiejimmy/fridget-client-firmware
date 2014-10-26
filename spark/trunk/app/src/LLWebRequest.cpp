@@ -42,9 +42,7 @@ namespace com_myfridget
                 // okay, not expecting any result
                 result = TRUE;
             }
-            // read the rest (if any) until server disconnects
-            while (client.connected()) client.read();
-            client.stop();
+            stop();
         }
         return result;
     }
@@ -91,5 +89,11 @@ namespace com_myfridget
             bytesRead += readNow;
         }
         return bytesRead;
+    }
+    
+    void LLWebRequest::stop() {
+        // read the rest (if any) until server disconnects
+        while (client.connected()) client.read();
+        client.stop();
     }
 }
