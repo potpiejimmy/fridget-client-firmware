@@ -10,8 +10,13 @@
 // made active when a command is send to TCon
 void ActivateDisplay();
 
+void DeactivateDisplay();
+
 // clears the spectra display to white screen
 void ClearDisplay();
+
+// UpdateDisplay
+int RefreshDisplay();
 
 // shows the image on the spectra display
 // expected argument is the image as byte array
@@ -24,3 +29,5 @@ void ClearDisplay();
 // this method expects the byte array to be of at least 400x300x2 bit = 30.000 Byte length
 // succeeding bytes will be ignored
 void ShowImageOnDisplay(byte* image);
+
+
