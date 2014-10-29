@@ -46,13 +46,17 @@ namespace com_myfridget
         
         // now start writing the image
         int bufIndex;
+        int flashIndex=0;
         for (int y = 0; y<600; y++)
         {
             for (int x = 0; x<50; x++)
             {
                 bufIndex = (x+y*50)%_BUF_SIZE;
                 if (bufIndex == 0)
-                    LLFlashUtil::read((uint8_t*)_buf, address, _BUF_SIZE);
+                {
+                    LLFlashUtil::read((uint8_t*)_buf, address+flashIndex*_BUF_SIZE, _BUF_SIZE);
+                    flashIndex++;
+                }
                 SPI.transfer(_buf[bufIndex]);
                 delayMicroseconds(1); //min 1
             }
