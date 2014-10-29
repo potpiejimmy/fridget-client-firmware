@@ -1,170 +1,160 @@
-// implements the commands in header file
-#include "SpectraCommands.h"
-// some helper methods
-void InitializeSPI();
-void UninitializeSPI();
+/* 
+ * File:   LLSpectraCommands.cpp
+ * Author: wolfram
+ *
+ */
 
+// TODO to be removed, use global definitions instead
+#define _BUF_SIZE 4000
+char _buf[_BUF_SIZE];
+
+
+// implements the commands in header file
+#include "LLSpectraCommands.h"
+
+// use LLFlashUtil.h for external flash memory access
+#include "LLFlashUtil.h"
+
+// this is the spark pins we will use beside the SPI pins.
+// for the meaning of EN and CS and BUSY, refer to ApplicationNote_EPD441_Spectra_v01.pdf in common/docs/Specifications
 #define TC_EN D7
 #define TC_CS D3
 #define TC_BUSY D5
 
-bool SPI_INITIALIZED = false;
-
-void ActivateDisplay()
+namespace com_myfridget
 {
-    if(!SPI_INITIALIZED) InitializeSPI();
-    // TC_CS is used for sending commands to the TCon. Default is disabled = HIGH.
-    digitalWrite(TC_CS, HIGH);
-    // set the output value to LOW which will activate the display
-    digitalWrite(TC_EN, HIGH);
-    // wait for the display to be initialized. 
-    // this information is read from TC_BUSY output of TCon board
-    // It takes 3ms according the spec till TC_BUSY is active, so let's wait here 10ms to be sure
-    delay(10);
-    // now loop till TC_BUSY is inactive (high)
-    // no, to save power we simply wait another 250ms, since 200ms is the max for init time of Tcon
-    delay (2500);
-}
+    // some helper methods defined below
+    void InitializeSPI();
+    void UninitializeSPI();
 
-void DeactivateDisplay()
-{
-    if(SPI_INITIALIZED)
+    void ShowImage(uint32_t address)
     {
+        InitializeSPI();
+        delay(1000); //TODO: unclear how much time we need after SPI initialization. Maybe 0 is ok. To be tried....
+        // now set EN and CS signal to HIGH. EN=HIGH enables the display. CS = HIGH means inactive (no command yet).
+        digitalWrite(TC_EN, HIGH);
+        digitalWrite(TC_CS, HIGH);
+        // wait the minimal time of 50ms according to spec before starting the command sequence with CS=LOW
+        delay(50); //min 50
         digitalWrite(TC_CS, LOW);
-        // set the output value to LOW which will activate the display
-        digitalWrite(TC_EN, LOW);
+        //wait the minimal time of 1ms according to spec
+        delay(1);  //min 1
+        //send the header and wait minimal time
+        SPI.transfer(0x08);
+        SPI.transfer(0xB0);
+        delay(5); // min 5
         
+        // now start writing the image
+        int bufIndex;
+        for (int y = 0; y<600; y++)
+        {
+            for (int x = 0; x<50; x++)
+            {
+                bufIndex = (x+y*50)%_BUF_SIZE;
+                if (bufIndex == 0)
+                    LLFlashUtil::read((uint8_t*)_buf, address, _BUF_SIZE);
+                SPI.transfer(_buf[bufIndex]);
+                delayMicroseconds(1); //min 1
+            }
+            delay(1); //typ 1
+        } 
+        digitalWrite(TC_CS, HIGH);
+        do
+        {
+            delay(200);
+        }
+        while (digitalRead(TC_BUSY)==HIGH);
+
+        digitalWrite(TC_CS, LOW);
+        digitalWrite(TC_EN, LOW);
         UninitializeSPI();
-        delay (2000);
+    }
+    
+    
+    /*
+    * Private helper methods 
+    */
+    void InitializeSPI()
+    {
+        pinMode(TC_EN, OUTPUT);
+        pinMode(TC_CS, OUTPUT);
+        pinMode(TC_BUSY, INPUT);
+    
+        // initialize SPI communication on spark
+        SPI.begin();
+        // setting the clock devider to 32, assuming
+        // that spark clock is 8Mhz and that TCon module
+        // of spectra display works up to 400Khz, so I set to 32, 
+        // saying that TCon is operated at 200Khz
+        // TODO: we could try with divider 16 which is 400KB which is the upper limit of Spectra
+        SPI.setClockDivider(SPI_CLOCK_DIV32) ;
+        // setting bit order to MSBFirst according the TCon module spec
+        SPI.setBitOrder(MSBFIRST);
+        // according to TCon Spec CPOL = 0 (CLK is low when not sending data) and CPHA = 0 (Bit wird bei positiver Flanke ausgelesen) which corresponds to mode 1
+        // see also http://en.wikipedia.org/wiki/Serial_Peripheral_Interface_Bus
+        SPI.setDataMode(SPI_MODE1);
+    }
+    
+    void UninitializeSPI()
+    {
+        // initialize SPI communication on spark
+        SPI.end();
     }
 }
 
-void ClearDisplay()
-{
-    if(!SPI_INITIALIZED) InitializeSPI();
-    // now send the command (TC_CS = LOW)
-    digitalWrite(TC_CS, LOW);
-    // wait according to spec min 6µs
-    delayMicroseconds(100);
-    // UploadImageData, see spec of TCON
-    SPI.transfer(0x20);
-    SPI.transfer(0x01);
-    SPI.transfer(0x00);
-    SPI.transfer(0xFA); //maximal 251 = 0xFA wegen Commandlaenge maximal 255. Bild muss unterteilt werden
-    // und mehrmals muss UploadImageData aufgerufen werden.
-    
-    // usw. hier halt senden...
-    // schreibe ich erst fertig wenn das EPD format für Spectra bekannt ist.
-    
-    // this command returns two byte in MISO. Duplex communication.
-    // send out zeros to get the return value
-    //byte ret1 = SPI.transfer(0x00);
-    //byte ret2 = SPI.transfer(0x00);
-    // and close command by setting TC_CS to HIGH again
-    digitalWrite(TC_CS, HIGH);
-}
-
-int RefreshDisplay()
-{
-    if(!SPI_INITIALIZED) InitializeSPI();
-    digitalWrite(TC_CS, LOW);
-    // wait according to spec min 6µs
-    delayMicroseconds(1000000);
-    // UploadImageData, see spec of TCON
-    SPI.transfer(0x24);
-    SPI.transfer(0x01);
-    SPI.transfer(0x00);
-
-    delayMicroseconds(1000000);
-
-    digitalWrite(TC_CS, HIGH);
-    
-    delay(5000);
-
-    digitalWrite(TC_CS, LOW);
-    // wait according to spec min 6µs
-    delayMicroseconds(1000000);
-    byte ret1 = SPI.transfer(0x00);
-    byte ret2 = SPI.transfer(0x00);
-    delayMicroseconds(1000000);
-
-    digitalWrite(TC_CS, HIGH);
-    
-    int retval = 0;
-    retval |= ret1;
-    retval = retval << 8;
-    retval |= ret2;
-    return retval;
-}
-
-void ShowImageOnDisplay(byte* image)
-{
-}
-
 /*
-* Private helper methods 
-*/
-void InitializeSPI()
-{
-    pinMode(TC_EN, OUTPUT);
-    pinMode(TC_CS, OUTPUT);
-
-    // initialize SPI communication on spark
-    SPI.begin();
-    // setting the clock devider to 4, assuming
-    // that spark clock is 8Mhz and that TCon module
-    // of spectry display works up to 3Mhz, so I set to 4, 
-    // saying that TCon is operated at 2Mhz
-    SPI.setClockDivider(SPI_CLOCK_DIV4) ;
-    // setting bit order to MSBFirst according the TCon module spec
-    SPI.setBitOrder(MSBFIRST);
-    // according to TCon Spec CPOL = 1 and CPHA = 1 which corresponds to mode 3
-    // see also http://en.wikipedia.org/wiki/Serial_Peripheral_Interface_Bus
-    SPI.setDataMode(SPI_MODE3);
-    
-    SPI_INITIALIZED = true;
-}
-
-void UninitializeSPI()
-{
-    // initialize SPI communication on spark
-    SPI.end();
-
-    SPI_INITIALIZED = false;
-}
-
-
-
-// JUST CODE FOR ME TO SHOW HOW FLASH ACCESS WORKS
-int SparkFlash_read(int address)
-{
-  if (address & 1)
-    return -1; // error, can only access half words
-
-  uint8_t values[2];
-  sFLASH_ReadBuffer(values, 0x80000 + address, 2);
-  return (values[0] << 8) | values[1];
-}
-
-int SparkFlash_write(int address, uint16_t value)
-{
-  if (address & 1)
-    return -1; // error, can only access half words
-
-  uint8_t values[2] = {
-    (uint8_t)((value >> 8) & 0xff),
-    (uint8_t)(value & 0xff)
-  };
-  sFLASH_WriteBuffer(values, 0x80000 + address, 2);
-  return 2; // or anything else signifying it worked
-}
-
-/*
-Additionally, as you can see and probably guess, it's much more efficient to write large buffers than to write a half word at a time. If your surrounding code:
-
-    guarantees even addresses and numbers of bytes
-    adds 0x80000 to addresses, and
-    converts data to/from a byte array
-
-then you would do better to just call sFLASH_ReadBuffer or sFLASH_WriteBuffer directly with a larger number of bytes as the final argument.
+// just to keep this one. It is a sequence that worked. writing alternating vertical lines of white, red, black.
+    void ShowImage(int address)
+    {
+        InitializeSPI();
+        delay(1000); //unknown
+        digitalWrite(TC_EN, HIGH);
+        digitalWrite(TC_CS, HIGH);
+        delay(50); //min 50
+        digitalWrite(TC_CS, LOW);
+        delay(1);  //min 1
+        SPI.transfer(0x08);
+        SPI.transfer(0xB0);
+        delay(5); // min 5
+        for (int y = 0; y<300; y++)
+        {
+            for (int x = 0; x<16; x++)
+            {
+                SPI.transfer(0x49);
+                delayMicroseconds(1); //min 1
+                SPI.transfer(0x24);
+                delayMicroseconds(1); //min 1
+                SPI.transfer(0x92);
+                delayMicroseconds(1); //min 1
+            }
+            SPI.transfer(0x49);
+            delayMicroseconds(1); //min 1
+            SPI.transfer(0x24);
+            delayMicroseconds(1); //min 1
+            delay(1); //typ 1
+        } 
+        delay(1); // typ 1
+        for (int y = 0; y<300; y++)
+        {
+            for (int x = 0; x<16; x++)
+            {
+                SPI.transfer(0x24);
+                delayMicroseconds(1); //min 1
+                SPI.transfer(0x92);
+                delayMicroseconds(1); //min 1
+                SPI.transfer(0x49);
+                delayMicroseconds(1); //min 1
+            }
+            SPI.transfer(0x24);
+            delayMicroseconds(1); //min 1
+            SPI.transfer(0x92);
+            delayMicroseconds(1); //min 1
+            delay(1); //typ 1
+        }
+        digitalWrite(TC_CS, HIGH);
+        delay(20000);
+        digitalWrite(TC_CS, LOW);
+        digitalWrite(TC_EN, LOW);
+        UninitializeSPI();
+    }
 */

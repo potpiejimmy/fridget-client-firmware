@@ -1,33 +1,26 @@
+/* 
+ * File:   LLSpectraCommands.h
+ * Author: wolfram
+ *
+ * Created on October 29, 2014
+ */
+
+#ifndef _com_myfridget_LLSPECTRACOMMANDS_H_
+#define	_com_myfridget_LLSPECTRACOMMANDS_H_
+
+//uses the application.h
+//addtionally we reuse here the global _buf variable and _BUF_SIZE defined in application.cpp (not really nice, I know. Come on, it's firmware...)
 #include "application.h"
 
-// Activate the display by setting the TC_EN signal
-// assuming the TC_EN entry of the TCon module is 
-// connected to D3 of spark
-// this method will also set D3 to ouput mode
-// Call this method before any other command below
-// D4 will be used for TC_CS entry of TCon
-// D4 will be set to HIGH initially to make sure that TC_CS is only
-// made active when a command is send to TCon
-void ActivateDisplay();
+// Shows the image on spectra display that starts at the given address of external flash memory.
+// I assume that starting from this address 30KB data is available describing the image.
+// The format is: 120.000 bits first (=15KB) describing the red color. 0=white, 1=red.
+// 300 lines with 400bits(50Bytes) each, one line after the other.
+// The next 120.000 bits (15KB) describe the black color. 0=white, 1=black. Some ordering.
+// See spec ApplicationNote_EPD441_Spectra_v01.pdf in common/docs/Specifications
+namespace com_myfridget
+{
+    void ShowImage(uint32_t address);
+}
 
-void DeactivateDisplay();
-
-// clears the spectra display to white screen
-void ClearDisplay();
-
-// UpdateDisplay
-int RefreshDisplay();
-
-// shows the image on the spectra display
-// expected argument is the image as byte array
-// this method is specific to 4.44" display with 400x300 pixels
-// each pixel color is encoded with two bits
-// 00 = black
-// 11 = white
-// 01 = red
-// 10 should not be used, will be translated to black
-// this method expects the byte array to be of at least 400x300x2 bit = 30.000 Byte length
-// succeeding bytes will be ignored
-void ShowImageOnDisplay(byte* image);
-
-
+#endif	/* _com_myfridget_LLSPECTRACOMMANDS_H_ */
