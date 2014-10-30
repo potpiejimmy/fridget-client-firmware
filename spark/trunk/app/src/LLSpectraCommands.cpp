@@ -27,7 +27,8 @@ namespace com_myfridget
     void ShowImage(uint32_t address)
     {
         InitializeSPI();
-        delay(1000); //TODO: unclear how much time we need after SPI initialization. Maybe 0 is ok. To be tried....
+       // delay(1000); //TODO: unclear how much time we need after SPI initialization. Maybe 0 is ok. To be tried....
+       // tested. Works fine without delay ;-)
         // now set EN and CS signal to HIGH. EN=HIGH enables the display. CS = HIGH means inactive (no command yet).
         digitalWrite(TC_EN, HIGH);
         digitalWrite(TC_CS, HIGH);
@@ -58,6 +59,7 @@ namespace com_myfridget
                 delayMicroseconds(1); //min 1
             }
             delay(1); //typ 1
+            if (y==299) delay(1);  // this one definitely is required between the two frames. Otherwise display shows nonsense.
         } 
         digitalWrite(TC_CS, HIGH);
         do
@@ -70,7 +72,7 @@ namespace com_myfridget
         digitalWrite(TC_EN, LOW);
         UninitializeSPI();
     }
-    
+  
     
     /*
     * Private helper methods 
@@ -83,12 +85,11 @@ namespace com_myfridget
     
         // initialize SPI communication on spark
         SPI.begin();
-        // setting the clock devider to 32, assuming
+        // setting the clock devider to 16, assuming
         // that spark clock is 8Mhz and that TCon module
-        // of spectra display works up to 400Khz, so I set to 32, 
-        // saying that TCon is operated at 200Khz
-        // TODO: we could try with divider 16 which is 400KB which is the upper limit of Spectra
-        SPI.setClockDivider(SPI_CLOCK_DIV32) ;
+        // of spectra display works up to 400Khz, so I set to 16, 
+        // saying that TCon is operated at 400Khz (upper limit)
+        SPI.setClockDivider(SPI_CLOCK_DIV16) ;
         // setting bit order to MSBFirst according the TCon module spec
         SPI.setBitOrder(MSBFIRST);
         // according to TCon Spec CPOL = 0 (CLK is low when not sending data) and CPHA = 0 (Bit wird bei positiver Flanke ausgelesen) which corresponds to mode 1
@@ -101,11 +102,11 @@ namespace com_myfridget
         // initialize SPI communication on spark
         SPI.end();
     }
-}
+
 
 /*
 // just to keep this one. It is a sequence that worked. writing alternating vertical lines of white, red, black.
-    void ShowImage(int address)
+    void ShowImage(uint32_t address)
     {
         InitializeSPI();
         delay(1000); //unknown
@@ -153,9 +154,13 @@ namespace com_myfridget
             delay(1); //typ 1
         }
         digitalWrite(TC_CS, HIGH);
-        delay(20000);
+        do
+        {
+            delay(200);
+        }
+        while (digitalRead(TC_BUSY)==HIGH);
         digitalWrite(TC_CS, LOW);
         digitalWrite(TC_EN, LOW);
         UninitializeSPI();
-    }
-*/
+    }*/
+}
