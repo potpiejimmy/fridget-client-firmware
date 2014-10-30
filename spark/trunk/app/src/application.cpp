@@ -29,10 +29,7 @@
 #include "LLRemoteLog.h"
 #include "LLWebRequest.h"
 #include "LLFlashUtil.h"
-
-// SERIAL DEBUGGING - if you enable this, you must connect via 9600 8N1 terminal
-// and hit any key so that the core can start up
-//#define _SERIAL_DEBUGGING_
+#include "LLSpectraCommands.h"
 
 // user states
 #define USER_STATE_OFFLINE                0
@@ -52,9 +49,10 @@
 #define SERVER_HOST_DEBUGNAME "www.doogetha.com"
 #define SERVER_PORT 80
 
-#define _BUF_SIZE 4000
-
 using namespace com_myfridget;
+
+/* Allocate read buffer (Note: declared in application.h) */
+char _buf[_BUF_SIZE];
 
 /* Set up remote logging */
 LLRemoteLog log(SERVER_HOST, SERVER_PORT);
@@ -62,15 +60,13 @@ LLRemoteLog log(SERVER_HOST, SERVER_PORT);
 LLWebRequest requester(SERVER_HOST, SERVER_PORT);
 /* The current user state */
 int userState;
-/* Read buffer */
-char _buf[_BUF_SIZE];
 
 /* Function prototypes -------------------------------------------------------*/
 void blinkLED(int on, int off);
 void debug(const char* msg);
 void debug(const String msg);
 void onOnline();
-void wakeAndSleep();
+void updateDisplayAndSleep();
 void flashTestImage();
 
 /* MANUAL: not connecting to Spark cloud, running user-code loop immediately
@@ -122,7 +118,7 @@ void loop()
         } else {
             // just wake and sleep:
             WiFi.off();
-            wakeAndSleep();
+            updateDisplayAndSleep();
         }
         break;
 
@@ -147,8 +143,8 @@ void loop()
     case USER_STATE_ONLINE:
         // flash the test image
         flashTestImage();
-        // perform wake and sleep
-        wakeAndSleep();
+        // perform display update and sleep
+        updateDisplayAndSleep();
         break;
         
     case USER_STATE_ONLINE_WITH_CLOUD:
@@ -220,29 +216,30 @@ void onOnline()
         return;
     }
     
-    int wakeTime = getServerParam("waketime", 5);
     int sleepTime = getServerParam("sleeptime", 30);
     int connectCycle = getServerParam("connectcycle", 1);
     
     EEPROM.write(0, (uint8_t)connectCycle);
     EEPROM.write(1, (uint8_t)0);
-    EEPROM.write(2, (uint8_t)((wakeTime&0xff00)>>8));
-    EEPROM.write(3, (uint8_t)((wakeTime&0xff)));
-    EEPROM.write(4, (uint8_t)((sleepTime&0xff00)>>8));
-    EEPROM.write(5, (uint8_t)((sleepTime&0xff)));
+    EEPROM.write(2, (uint8_t)((sleepTime&0xff00)>>8));
+    EEPROM.write(3, (uint8_t)((sleepTime&0xff)));
 }
 
-void wakeAndSleep()
+void updateDisplay()
+{
+    ShowImage(EEPROM.read(1) * 30000); // XXX
+}
+
+void updateDisplayAndSleep()
 {
     uint8_t cycle = EEPROM.read(1) + 1;
-    int wakeTime = ((int)EEPROM.read(2))<<8 | EEPROM.read(3);
-    int sleepTime = ((int)EEPROM.read(4))<<8 | EEPROM.read(5);
+    int sleepTime = ((int)EEPROM.read(2))<<8 | EEPROM.read(3);
+ 
+    // write the image from flash to the display:
+    updateDisplay();
     
-    // turn LED on for wakeTime seconds, then deep-sleep for sleepTime seconds
-    String msg = String("Staying awake for ") + wakeTime + " sec.";
-    debug(msg); log.log(msg);
-    blinkLED(wakeTime * 1000, 0);
-    msg = String("Going to sleep for ") + sleepTime + " sec.";
+    // deep-sleep for sleepTime seconds
+    String msg = String("Going to sleep for ") + sleepTime + " sec.";
     debug(msg); log.log(msg);
     
     debug(String("Increased cycle no. to ") + cycle);
@@ -259,34 +256,46 @@ void flashTestImage()
     if (getServerParam("flashimage", 0))
     {
         log.log("Requesting image data and writing to flash...");
-        snprintf(url, 128, "/fridget/res/img/%s/", Spark.deviceID().c_str());
-        if (requester.sendRequest("GET", url, NULL))
+        int index = 0;
+        bool done = FALSE;
+        do
         {
-            int epdSize = 30000; // XXX
-            int readSoFar = 0;
-            if (requester.readHeaders())
+            snprintf(url, 128, "/fridget/res/img/%s/?index=%d", Spark.deviceID().c_str(), index);
+            if (requester.sendRequest("GET", url, NULL))
             {
-                while (readSoFar < epdSize) {
-                    int shouldRead = epdSize - readSoFar;
-                    if (shouldRead > _BUF_SIZE) shouldRead = _BUF_SIZE;
-                    debug(String("Reading image data [") + readSoFar + "-" + (readSoFar + shouldRead - 1) + "]");
-                    int readNow = requester.readAll(_buf, shouldRead);
-                    if (readNow != shouldRead) {
-                        debug(String("Failed, received only ") + readNow);
-                        break;
+                int epdSize = 30000; // XXX
+                int readSoFar = 0;
+                if (requester.readHeaders())
+                {
+                    while (readSoFar < epdSize)
+                    {
+                        int shouldRead = epdSize - readSoFar;
+                        if (shouldRead > _BUF_SIZE) shouldRead = _BUF_SIZE;
+                        debug(String("Reading image data ") + index + " [" + readSoFar + "-" + (readSoFar + shouldRead - 1) + "]");
+                        int readNow = requester.readAll(_buf, shouldRead);
+                        if (readNow != shouldRead)
+                        {
+                            debug(String("Failed, received only ") + readNow);
+                            done = TRUE;
+                            break;
+                        }
+                        // okay, burn it
+                        debug("Writing to flash.");
+                        LLFlashUtil::flash((const uint8_t*)_buf, (index * epdSize) + readSoFar, readNow);
+                        debug("Done.");
+                        readSoFar += readNow;
                     }
-                    // okay, burn it
-                    debug("Writing to flash.");
-                    LLFlashUtil::flash((const uint8_t*)_buf, readSoFar, readNow);
-                    debug("Done.");
-                    readSoFar += readNow;
                 }
+                else done = TRUE;
+                
+                requester.stop();
+                log.log(String("Wrote ") + readSoFar + " bytes to flash.");
             }
-            requester.stop();
-            log.log(String("Wrote ") + readSoFar + " bytes to flash.");
-        }
+            else done = TRUE;
+            
+            index++;
+        } while (!done);
     }
-    
 }
 
 void blinkLED(int on, int off)

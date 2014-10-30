@@ -4,14 +4,11 @@
  *
  */
 
-// TODO to be removed, use global definitions instead
-#define _BUF_SIZE 4000
-char _buf[_BUF_SIZE];
-
-
 // implements the commands in header file
 #include "LLSpectraCommands.h"
 
+// include application.h for global definitions
+#include "application.h"
 // use LLFlashUtil.h for external flash memory access
 #include "LLFlashUtil.h"
 
