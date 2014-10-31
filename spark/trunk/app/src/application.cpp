@@ -49,6 +49,11 @@
 #define SERVER_HOST_DEBUGNAME "www.doogetha.com"
 #define SERVER_PORT 80
 
+// The size of an EPD image
+#define SIZE_EPD_IMAGE     30000
+// The size of flash memory to reserve for one EPD image, must be a multiple of 4KB
+#define SIZE_EPD_SEGMENT  0x8000
+
 using namespace com_myfridget;
 
 /* Allocate read buffer (Note: declared in application.h) */
@@ -148,7 +153,8 @@ void loop()
         break;
         
     case USER_STATE_ONLINE_WITH_CLOUD:
-        // do nothing in online loop for cloud
+        // call Spark.process() for cloud operations
+		Spark.process();
         break;
     }
 }
@@ -227,7 +233,7 @@ void onOnline()
 
 void updateDisplay()
 {
-    ShowImage(EEPROM.read(1) * 30000); // XXX
+    ShowImage(EEPROM.read(1) * SIZE_EPD_SEGMENT); // XXX
 }
 
 void updateDisplayAndSleep()
@@ -263,13 +269,13 @@ void flashTestImage()
             snprintf(url, 128, "/fridget/res/img/%s/?index=%d", Spark.deviceID().c_str(), index);
             if (requester.sendRequest("GET", url, NULL))
             {
-                int epdSize = 30000; // XXX
                 int readSoFar = 0;
+				int badBlocks = 0;
                 if (requester.readHeaders())
                 {
-                    while (readSoFar < epdSize)
+                    while (readSoFar < SIZE_EPD_IMAGE)
                     {
-                        int shouldRead = epdSize - readSoFar;
+                        int shouldRead = SIZE_EPD_IMAGE - readSoFar;
                         if (shouldRead > _BUF_SIZE) shouldRead = _BUF_SIZE;
                         debug(String("Reading image data ") + index + " [" + readSoFar + "-" + (readSoFar + shouldRead - 1) + "]");
                         int readNow = requester.readAll(_buf, shouldRead);
@@ -281,7 +287,9 @@ void flashTestImage()
                         }
                         // okay, burn it
                         debug("Writing to flash.");
-                        LLFlashUtil::flash((const uint8_t*)_buf, (index * epdSize) + readSoFar, readNow);
+                        if (!LLFlashUtil::flash((const uint8_t*)_buf, (index * SIZE_EPD_SEGMENT) + readSoFar, readNow)) {
+							backBlocks++;
+						}
                         debug("Done.");
                         readSoFar += readNow;
                     }
@@ -290,6 +298,9 @@ void flashTestImage()
                 
                 requester.stop();
                 log.log(String("Wrote ") + readSoFar + " bytes to flash.");
+				if (backBlocks > 0) {
+					log.log(String("XXX BAD FLASH BLOCKS: ") + backBlocks);
+				}
             }
             else done = TRUE;
             
