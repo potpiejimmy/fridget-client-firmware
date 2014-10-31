@@ -49,7 +49,7 @@
 // and hit any key so that the core can start up
 //#define _SERIAL_DEBUGGING_
 
-#define _BUF_SIZE 4000
+#define _BUF_SIZE 0x1000
 
 /* Read buffer */
 extern char _buf[_BUF_SIZE];
