@@ -270,7 +270,7 @@ void flashTestImage()
             if (requester.sendRequest("GET", url, NULL))
             {
                 int readSoFar = 0;
-				int badBlocks = 0;
+                int badBlocks = 0;
                 if (requester.readHeaders())
                 {
                     while (readSoFar < SIZE_EPD_IMAGE)
@@ -288,8 +288,8 @@ void flashTestImage()
                         // okay, burn it
                         debug("Writing to flash.");
                         if (!LLFlashUtil::flash((const uint8_t*)_buf, (index * SIZE_EPD_SEGMENT) + readSoFar, readNow)) {
-							backBlocks++;
-						}
+                            badBlocks++;
+                        }
                         debug("Done.");
                         readSoFar += readNow;
                     }
@@ -298,9 +298,9 @@ void flashTestImage()
                 
                 requester.stop();
                 log.log(String("Wrote ") + readSoFar + " bytes to flash.");
-				if (backBlocks > 0) {
-					log.log(String("XXX BAD FLASH BLOCKS: ") + backBlocks);
-				}
+                if (badBlocks > 0) {
+                    log.log(String("XXX BAD FLASH BLOCKS: ") + badBlocks);
+                }
             }
             else done = TRUE;
             
