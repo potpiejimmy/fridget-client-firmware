@@ -264,15 +264,17 @@ void flashTestImage()
         log.log("Requesting image data and writing to flash...");
         int index = 0;
         bool done = FALSE;
-        do
+        snprintf(url, 128, "/fridget/res/img/%s/", Spark.deviceID().c_str());
+        if (requester.sendRequest("GET", url, NULL))
         {
-            snprintf(url, 128, "/fridget/res/img/%s/?index=%d", Spark.deviceID().c_str(), index);
-            if (requester.sendRequest("GET", url, NULL))
+            int overallSize = 0;
+            int badBlocks = 0;
+            
+            if (requester.readHeaders())
             {
-                int readSoFar = 0;
-                int badBlocks = 0;
-                if (requester.readHeaders())
+                do
                 {
+                    int readSoFar = 0;
                     while (readSoFar < SIZE_EPD_IMAGE)
                     {
                         int shouldRead = SIZE_EPD_IMAGE - readSoFar;
@@ -293,19 +295,16 @@ void flashTestImage()
                         debug("Done.");
                         readSoFar += readNow;
                     }
-                }
-                else done = TRUE;
-                
-                requester.stop();
-                log.log(String("Wrote ") + readSoFar + " bytes to flash.");
-                if (badBlocks > 0) {
-                    log.log(String("XXX BAD FLASH BLOCKS: ") + badBlocks);
-                }
+                    overallSize += readSoFar;
+                    index++;
+                } while (!done);
             }
-            else done = TRUE;
-            
-            index++;
-        } while (!done);
+            requester.stop();
+            log.log(String("Wrote ") + overallSize + " bytes to flash.");
+            if (badBlocks > 0) {
+                log.log(String("XXX BAD FLASH BLOCKS: ") + badBlocks);
+            }
+        }
     }
 }
 
