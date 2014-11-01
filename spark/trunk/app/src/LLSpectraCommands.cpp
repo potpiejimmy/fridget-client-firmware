@@ -62,15 +62,15 @@ namespace com_myfridget
             if (y==299) delay(1);  // this one definitely is required between the two frames. Otherwise display shows nonsense.
         } 
         digitalWrite(TC_CS, HIGH);
-        do
+		delay(200);
+		UninitializeSPI();
+        while (digitalRead(TC_BUSY)==HIGH)        
         {
             delay(200);
         }
-        while (digitalRead(TC_BUSY)==HIGH);
 
         digitalWrite(TC_CS, LOW);
         digitalWrite(TC_EN, LOW);
-        UninitializeSPI();
     }
   
     
