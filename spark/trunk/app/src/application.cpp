@@ -74,6 +74,67 @@ void onOnline();
 void updateDisplayAndSleep();
 void flashTestImage();
 
+/* ############## POWER DEBUGGING TESTING ONLY ################# */
+int pdAfioOn(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE); return 0;}
+int pdAfioOff(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, DISABLE); return 0;}
+int pdGpioOn(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB|RCC_APB2Periph_GPIOC|RCC_APB2Periph_GPIOD|RCC_APB2Periph_GPIOE|RCC_APB2Periph_GPIOF|RCC_APB2Periph_GPIOG, ENABLE); return 0;}
+int pdGpioOff(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB|RCC_APB2Periph_GPIOC|RCC_APB2Periph_GPIOD|RCC_APB2Periph_GPIOE|RCC_APB2Periph_GPIOF|RCC_APB2Periph_GPIOG, DISABLE); return 0;}
+int pdAdcOn(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1|RCC_APB2Periph_ADC2|RCC_APB2Periph_ADC3, ENABLE); return 0;}
+int pdAdcOff(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1|RCC_APB2Periph_ADC2|RCC_APB2Periph_ADC3, DISABLE); return 0;}
+int pdTimOn(String args) {
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1|RCC_APB2Periph_TIM8|RCC_APB2Periph_TIM9|RCC_APB2Periph_TIM10|RCC_APB2Periph_TIM11|RCC_APB2Periph_TIM15|RCC_APB2Periph_TIM16|RCC_APB2Periph_TIM17, ENABLE);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2|RCC_APB1Periph_TIM3|RCC_APB1Periph_TIM4|RCC_APB1Periph_TIM5|RCC_APB1Periph_TIM6|RCC_APB1Periph_TIM7|RCC_APB1Periph_TIM12|RCC_APB1Periph_TIM13|RCC_APB1Periph_TIM14, ENABLE);
+    return 0;
+}
+int pdTimOff(String args) {
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1|RCC_APB2Periph_TIM8|RCC_APB2Periph_TIM9|RCC_APB2Periph_TIM10|RCC_APB2Periph_TIM11|RCC_APB2Periph_TIM15|RCC_APB2Periph_TIM16|RCC_APB2Periph_TIM17, DISABLE);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2|RCC_APB1Periph_TIM3|RCC_APB1Periph_TIM4|RCC_APB1Periph_TIM5|RCC_APB1Periph_TIM6|RCC_APB1Periph_TIM7|RCC_APB1Periph_TIM12|RCC_APB1Periph_TIM13|RCC_APB1Periph_TIM14, DISABLE);
+    return 0;
+}
+int pdSpi1On(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE); return 0;}
+int pdSpi1Off(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, DISABLE); return 0;}
+int pdUsart1On(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE); return 0;}
+int pdUsart1Off(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, DISABLE); return 0;}
+int pdWwdgOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_WWDG, ENABLE); return 0;}
+int pdWwdgOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_WWDG, DISABLE); return 0;}
+int pdSpi23On(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2|RCC_APB1Periph_SPI3, ENABLE); return 0;}
+int pdSpi23Off(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2|RCC_APB1Periph_SPI3, DISABLE); return 0;}
+int pdUsart2345On(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2|RCC_APB1Periph_USART3/*|RCC_APB1Periph_USART4|RCC_APB1Periph_USART5*/, ENABLE); return 0;}
+int pdUsart2345Off(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2|RCC_APB1Periph_USART3/*|RCC_APB1Periph_USART4|RCC_APB1Periph_USART5*/, DISABLE); return 0;}
+int pdI2cOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1|RCC_APB1Periph_I2C2, ENABLE); return 0;}
+int pdI2cOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1|RCC_APB1Periph_I2C2, DISABLE); return 0;}
+int pdUsbOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_USB, ENABLE); return 0;}
+int pdUsbOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_USB, DISABLE); return 0;}
+int pdCanOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE); return 0;}
+int pdCanOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, DISABLE); return 0;}
+int pdBkpOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_BKP, ENABLE); return 0;}
+int pdBkpOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_BKP, DISABLE); return 0;}
+int pdPwrOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE); return 0;}
+int pdPwrOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, DISABLE); return 0;}
+int pdDacOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, ENABLE); return 0;}
+int pdDacOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, DISABLE); return 0;}
+int pdCecOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_CEC, ENABLE); return 0;}
+int pdCecOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_CEC, DISABLE); return 0;}
+void setupPowerDebugging() {
+    Spark.function("pdAfioOn", pdAfioOn); Spark.function("pdAfioOff", pdAfioOff);
+    Spark.function("pdGpioOn", pdGpioOn); Spark.function("pdGpioOff", pdGpioOff);
+    Spark.function("pdAdcOn", pdAdcOn); Spark.function("pdAdcOff", pdAdcOff);
+    Spark.function("pdTimOn", pdTimOn); Spark.function("pdTimOff", pdTimOff);
+    Spark.function("pdSpi1On", pdSpi1On); Spark.function("pdSpi1Off", pdSpi1Off);
+    Spark.function("pdUsart1On", pdUsart1On); Spark.function("pdUsart1Off", pdUsart1Off);
+    Spark.function("pdWwdgOn", pdWwdgOn); Spark.function("pdWwdgOff", pdWwdgOff);
+    Spark.function("pdSpi23On", pdSpi23On); Spark.function("pdSpi23Off", pdSpi23Off);
+    Spark.function("pdUsart2345On", pdUsart2345On); Spark.function("pdUsart2345Off", pdUsart2345Off);
+    Spark.function("pdI2cOn", pdI2cOn); Spark.function("pdI2cOff", pdI2cOff);
+    Spark.function("pdUsbOn", pdUsbOn); Spark.function("pdUsbOff", pdUsbOff);
+    Spark.function("pdCanOn", pdCanOn); Spark.function("pdCanOff", pdCanOff);
+    Spark.function("pdBkpOn", pdBkpOn); Spark.function("pdBkpOff", pdBkpOff);
+    Spark.function("pdPwrOn", pdPwrOn); Spark.function("pdPwrOff", pdPwrOff);
+    Spark.function("pdDacOn", pdDacOn); Spark.function("pdDacOff", pdDacOff);
+    Spark.function("pdCecOn", pdCecOn); Spark.function("pdCecOff", pdCecOff);
+}
+/* ############################################################# */
+
 /* MANUAL: not connecting to Spark cloud, running user-code loop immediately
  * on power-up. */
 SYSTEM_MODE(MANUAL);
