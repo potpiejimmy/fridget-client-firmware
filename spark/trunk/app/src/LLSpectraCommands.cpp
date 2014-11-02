@@ -87,8 +87,8 @@ namespace com_myfridget
         SPI.begin();
         // setting the clock devider to 16, assuming
         // that spark clock is 8Mhz and that TCon module
-        // of spectra display works up to 400Khz, so I set to 16, 
-        // saying that TCon is operated at 400Khz (upper limit)
+        // of spectra display works up to 500Khz, so I set to 16, 
+        // saying that TCon is operated at 500Khz (upper limit)
         SPI.setClockDivider(SPI_CLOCK_DIV16) ;
         // setting bit order to MSBFirst according the TCon module spec
         SPI.setBitOrder(MSBFIRST);
