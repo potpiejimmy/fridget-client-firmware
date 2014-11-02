@@ -115,23 +115,27 @@ int pdDacOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, ENABLE); re
 int pdDacOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, DISABLE); return 0;}
 int pdCecOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_CEC, ENABLE); return 0;}
 int pdCecOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_CEC, DISABLE); return 0;}
+int powerDebug(String args) {
+    if (args.equals("pdAfioOn")) return pdAfioOn(args); if (args.equals("pdAfioOff")) return pdAfioOff(args);
+    if (args.equals("pdGpioOn")) return pdGpioOn(args); if (args.equals("pdGpioOff")) return pdGpioOff(args);
+    if (args.equals("pdAdcOn")) return pdAdcOn(args); if (args.equals("pdAdcOff")) return pdAdcOff(args);
+    if (args.equals("pdTimOn")) return pdTimOn(args); if (args.equals("pdTimOff")) return pdTimOff(args);
+    if (args.equals("pdSpi1On")) return pdSpi1On(args); if (args.equals("pdSpi1Off")) return pdSpi1Off(args);
+    if (args.equals("pdUsart1On")) return pdUsart1On(args); if (args.equals("pdUsart1Off")) return pdUsart1Off(args);
+    if (args.equals("pdWwdgOn")) return pdWwdgOn(args); if (args.equals("pdWwdgOff")) return pdWwdgOff(args);
+    if (args.equals("pdSpi23On")) return pdSpi23On(args); if (args.equals("pdSpi23Off")) return pdSpi23Off(args);
+    if (args.equals("pdUsart2345On")) return pdUsart2345On(args); if (args.equals("pdUsart2345Off")) return pdUsart2345Off(args);
+    if (args.equals("pdI2cOn")) return pdI2cOn(args); if (args.equals("pdI2cOff")) return pdI2cOff(args);
+    if (args.equals("pdUsbOn")) return pdUsbOn(args); if (args.equals("pdUsbOff")) return pdUsbOff(args);
+    if (args.equals("pdCanOn")) return pdCanOn(args); if (args.equals("pdCanOff")) return pdCanOff(args);
+    if (args.equals("pdBkpOn")) return pdBkpOn(args); if (args.equals("pdBkpOff")) return pdBkpOff(args);
+    if (args.equals("pdPwrOn")) return pdPwrOn(args); if (args.equals("pdPwrOff")) return pdPwrOff(args);
+    if (args.equals("pdDacOn")) return pdDacOn(args); if (args.equals("pdDacOff")) return pdDacOff(args);
+    if (args.equals("pdCecOn")) return pdCecOn(args); if (args.equals("pdCecOff")) return pdCecOff(args);
+    
+}
 void setupPowerDebugging() {
-    Spark.function("pdAfioOn", pdAfioOn); Spark.function("pdAfioOff", pdAfioOff);
-    Spark.function("pdGpioOn", pdGpioOn); Spark.function("pdGpioOff", pdGpioOff);
-    Spark.function("pdAdcOn", pdAdcOn); Spark.function("pdAdcOff", pdAdcOff);
-    Spark.function("pdTimOn", pdTimOn); Spark.function("pdTimOff", pdTimOff);
-    Spark.function("pdSpi1On", pdSpi1On); Spark.function("pdSpi1Off", pdSpi1Off);
-    Spark.function("pdUsart1On", pdUsart1On); Spark.function("pdUsart1Off", pdUsart1Off);
-    Spark.function("pdWwdgOn", pdWwdgOn); Spark.function("pdWwdgOff", pdWwdgOff);
-    Spark.function("pdSpi23On", pdSpi23On); Spark.function("pdSpi23Off", pdSpi23Off);
-    Spark.function("pdUsart2345On", pdUsart2345On); Spark.function("pdUsart2345Off", pdUsart2345Off);
-    Spark.function("pdI2cOn", pdI2cOn); Spark.function("pdI2cOff", pdI2cOff);
-    Spark.function("pdUsbOn", pdUsbOn); Spark.function("pdUsbOff", pdUsbOff);
-    Spark.function("pdCanOn", pdCanOn); Spark.function("pdCanOff", pdCanOff);
-    Spark.function("pdBkpOn", pdBkpOn); Spark.function("pdBkpOff", pdBkpOff);
-    Spark.function("pdPwrOn", pdPwrOn); Spark.function("pdPwrOff", pdPwrOff);
-    Spark.function("pdDacOn", pdDacOn); Spark.function("pdDacOff", pdDacOff);
-    Spark.function("pdCecOn", pdCecOn); Spark.function("pdCecOff", pdCecOff);
+    Spark.function("powerDebug", powerDebug);
 }
 /* ############################################################# */
 
@@ -143,6 +147,9 @@ SYSTEM_MODE(MANUAL);
 /* This function is called once at start up ----------------------------------*/
 void setup()
 {
+    /* XXX POWER DEBUGGING */
+    setupPowerDebugging();
+    
     /* start offline */
     userState = USER_STATE_OFFLINE;
 
