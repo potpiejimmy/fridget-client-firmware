@@ -33,14 +33,14 @@ namespace com_myfridget
         digitalWrite(TC_EN, HIGH);
         digitalWrite(TC_CS, HIGH);
         // wait the minimal time of 50ms according to spec before starting the command sequence with CS=LOW
-        delay(50); //min 50
+        delayRealMicros(50000); //min 50
         digitalWrite(TC_CS, LOW);
         //wait the minimal time of 1ms according to spec
-        delay(1);  //min 1
+        delayRealMicros(1000);  //min 1
         //send the header and wait minimal time
         SPI.transfer(0x08);
         SPI.transfer(0xB0);
-        delay(5); // min 5
+        delayRealMicros(5000); // min 5
         
         // now start writing the image
         int bufIndex;
@@ -58,15 +58,15 @@ namespace com_myfridget
                 SPI.transfer(_buf[bufIndex]);
                 delayMicroseconds(1); //min 1
             }
-            delay(1); //typ 1
-            if (y==299) delay(1);  // this one definitely is required between the two frames. Otherwise display shows nonsense.
+            delayRealMicros(1000); //typ 1
+            if (y==299) delayRealMicros(1000);  // this one definitely is required between the two frames. Otherwise display shows nonsense.
         } 
         digitalWrite(TC_CS, HIGH);
-		delay(200);
+		delayRealMicros(200000);
 		UninitializeSPI();
         while (digitalRead(TC_BUSY)==HIGH)        
         {
-            delay(200);
+            delayRealMicros(200000);
         }
 
         digitalWrite(TC_CS, LOW);
@@ -89,7 +89,7 @@ namespace com_myfridget
         // that spark clock is 8Mhz and that TCon module
         // of spectra display works up to 500Khz, so I set to 16, 
         // saying that TCon is operated at 500Khz (upper limit)
-        SPI.setClockDivider(SPI_CLOCK_DIV16) ;
+        SPI.setClockDivider(SPI_CLOCK_DIV2) ;
         // setting bit order to MSBFirst according the TCon module spec
         SPI.setBitOrder(MSBFIRST);
         // according to TCon Spec CPOL = 0 (CLK is low when not sending data) and CPHA = 0 (Bit wird bei positiver Flanke ausgelesen) which corresponds to mode 1

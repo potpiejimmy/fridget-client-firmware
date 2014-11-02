@@ -54,4 +54,6 @@
 /* Read buffer */
 extern char _buf[_BUF_SIZE];
 
+void delayRealMicros(unsigned long us);
+
 #endif /* APPLICATION_H_ */
