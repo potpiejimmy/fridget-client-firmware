@@ -29,22 +29,16 @@ namespace com_myfridget
         private:
             LLBufferedByteInputStream* in;
             
-            struct dictionaryNode {
-                char value;
+            typedef struct DictionaryEntry {
+                unsigned int code;
                 unsigned char symbol;
-                struct dictionaryNode* left;
-                struct dictionaryNode* right;
-            };
-            typedef struct dictionaryNode dictionaryNode;
+            } DictionaryEntry;
             
-            dictionaryNode* dictionary;
+            DictionaryEntry* dictionary;
+            int dictionarySize;
             
             void buildDictionary();
-            void printDictionary(dictionaryNode* node, char* pbuf, int pbufc);
-            void freeDictionary();
-            dictionaryNode* fetchFirst(dictionaryNode** queue, int capacity);
-            void enqueue(dictionaryNode** queue, int capacity, dictionaryNode* node);
-            int queueSize(dictionaryNode** queue, int capacity);
+            void printDictionary();
     };
 }
 
