@@ -16,7 +16,7 @@ namespace com_myfridget
     {
 
         public:
-            LLRLEInputStream(LLInputStream* in, unsigned char* buf, int len);
+            LLRLEInputStream(LLInputStream* in);
 
             // BEGIN IMPLEMENTATION OF INPUTSTREAM
             virtual int read(unsigned char* b, int len);
@@ -27,6 +27,9 @@ namespace com_myfridget
 
         private:
             LLInputStream* in;
+            unsigned char currentBit;
+            unsigned int currentLen;
+            void decodeNext();
     };
 }
 

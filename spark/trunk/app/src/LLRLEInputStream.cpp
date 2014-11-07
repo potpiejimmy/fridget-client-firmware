@@ -10,19 +10,45 @@
 
 namespace com_myfridget
 {
-    LLRLEInputStream::LLRLEInputStream(LLInputStream* in, unsigned char* buf, int len)
-        : in(in) {
+    LLRLEInputStream::LLRLEInputStream(LLInputStream* in)
+        : in(in), currentBit(0), currentLen(0) {
         
     }
 
     int LLRLEInputStream::read(unsigned char* b, int l) {
-	    // XXX TODO
-        return -1; 
+        int count;
+        for (count=0; count<l && !in->eos(); count++) b[count] = read();
+        return count;
     }
     
     unsigned char LLRLEInputStream::read() {
-	    // XXX TODO
-        return -1; 
+        if (currentLen>=8) { // speed optimization
+            currentLen -= 8;
+            return currentBit ? 0xFF : 0x00;
+        } else {
+            unsigned char result = 0;
+            for (int i=0; i<8; i++) {
+                if (!currentLen) decodeNext();
+                result |= (currentBit<<(7-i));
+                currentLen--;
+            }
+            return result;
+        }
+    }
+    
+    void LLRLEInputStream::decodeNext() {
+        unsigned int rle = in->read();
+        currentBit = rle & 0x80 ? 1 : 0;
+        currentLen = rle & 0x3f;
+        int bitPos = 6;
+        bool moreLen = rle & 0x40;
+        while (moreLen) {
+            rle = in->read();
+            moreLen = rle & 0x80;
+            currentLen |= (rle & 0x7f)<<bitPos;
+            bitPos += 7;
+        }
+        currentLen++; // encoded is LEN - 1
     }
     
     void LLRLEInputStream::close() {

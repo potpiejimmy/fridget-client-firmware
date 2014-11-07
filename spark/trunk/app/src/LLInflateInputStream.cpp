@@ -21,10 +21,8 @@ namespace com_myfridget
     }
 
     int LLInflateInputStream::read(unsigned char* b, int len) {
-		int count;
-		for (count=0; count<len && !in->eos(); count++) {
-			b[count] = read();
-		}
+        int count;
+        for (count=0; count<len && !in->eos(); count++) b[count] = read();
         return count;
     }
     
@@ -51,7 +49,6 @@ namespace com_myfridget
         for (int i=0; i<dictionarySize; i++) {
             dictionary[i] = in->read();
         }
-        printDictionary();
     }
 	
 	unsigned char LLInflateInputStream::inflateNextByte() {	
