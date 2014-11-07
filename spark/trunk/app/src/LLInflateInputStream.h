@@ -6,10 +6,12 @@
  */
 
 #ifndef _com_myfridget_LLINFLATEINPUTSTREAM_H
-#define	_com_myfridget_LLINFLATEINPUTSTREAM_H
+#define _com_myfridget_LLINFLATEINPUTSTREAM_H
 
 #include "LLInputStream.h"
-#include "LLBufferedByteInputStream.h"
+#include "LLBufferedBitInputStream.h"
+
+#define com_myfridget_LLINFLATEINPUTSTREAM_MAX_PREFIX_LEN 32
 
 namespace com_myfridget
 {
@@ -17,30 +19,28 @@ namespace com_myfridget
     {
 
         public:
-            LLInflateInputStream(LLBufferedByteInputStream* in);
+            LLInflateInputStream(LLBufferedBitInputStream* in);
             virtual ~LLInflateInputStream();
 
             // BEGIN IMPLEMENTATION OF INPUTSTREAM
             virtual int read(unsigned char* b, int len);
+            virtual unsigned char read();
             virtual void close();
             virtual bool eos();
             // END IMPLEMENTATION OF INPUTSTREAM
 
         private:
-            LLBufferedByteInputStream* in;
+            LLBufferedBitInputStream* in;
             
-            typedef struct DictionaryEntry {
-                unsigned int code;
-                unsigned char symbol;
-            } DictionaryEntry;
-            
-            DictionaryEntry* dictionary;
+            unsigned char* dictionary;
             int dictionarySize;
+            unsigned char prefixLengths[com_myfridget_LLINFLATEINPUTSTREAM_MAX_PREFIX_LEN];
             
             void buildDictionary();
-            void printDictionary();
+            
+            unsigned char inflateNextByte();
     };
 }
 
-#endif	/* _com_myfridget_LLINFLATEINPUTSTREAM_H */
+#endif /* _com_myfridget_LLINFLATEINPUTSTREAM_H */
 

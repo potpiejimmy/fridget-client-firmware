@@ -1,33 +1,25 @@
 /* 
- * File:   LLBufferedByteInputStream.cpp
+ * File:   LLBufferedBitInputStream.cpp
  * Author: thorsten
  *
  * Created on November 5, 2014, 12:29 PM
  */
 
-#include "LLBufferedByteInputStream.h"
+#include "LLBufferedBitInputStream.h"
 #include "LLInputStream.h"
 
 namespace com_myfridget
 {
-    LLBufferedByteInputStream::LLBufferedByteInputStream(LLInputStream* in, unsigned char* buf, int len)
+    LLBufferedBitInputStream::LLBufferedBitInputStream(LLInputStream* in, unsigned char* buf, int len)
         : in(in), buf(buf), len(len), pos(0), bitPos(0), availPos(0) {
         
     }
 
-    int LLBufferedByteInputStream::read(unsigned char* b, int l) {
-        return -1; // not implemented, use readByte or readBit instead
+    int LLBufferedBitInputStream::read(unsigned char* b, int l) {
+        return -1; // not implemented, use read() or readBit() instead
     }
     
-    void LLBufferedByteInputStream::close() {
-        in->close();
-    }
-    
-    bool LLBufferedByteInputStream::eos() {
-        return in->eos() && empty();
-    }
-
-    unsigned char LLBufferedByteInputStream::readByte() {
+    unsigned char LLBufferedBitInputStream::read() {
         if (empty()) {
             if (!fillBuffer()) return -1; // XXX WARNING reading beyond EOF
         }
@@ -35,7 +27,15 @@ namespace com_myfridget
         return buf[pos++];
     }
     
-    bool LLBufferedByteInputStream::readBit() {
+    void LLBufferedBitInputStream::close() {
+        in->close();
+    }
+    
+    bool LLBufferedBitInputStream::eos() {
+        return in->eos() && empty();
+    }
+
+    bool LLBufferedBitInputStream::readBit() {
         if (empty()) {
             if (!fillBuffer()) return false; // XXX WARNING reading beyond EOF
         }
@@ -48,11 +48,11 @@ namespace com_myfridget
         return bit;
     }
     
-    bool LLBufferedByteInputStream::empty() {
+    bool LLBufferedBitInputStream::empty() {
         return pos>=availPos;
     }
     
-    bool LLBufferedByteInputStream::fillBuffer() {
+    bool LLBufferedBitInputStream::fillBuffer() {
         int read = in->read(buf, len);
         if (read < 0) return false;
         availPos = read;

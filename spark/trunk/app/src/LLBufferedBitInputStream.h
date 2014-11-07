@@ -1,28 +1,28 @@
 /*
- * File:   LLBufferedByteInputStream.h
+ * File:   LLBufferedBitInputStream.h
  * Author: thorsten
  *
  * Created on November 5, 2014, 12:29 PM
  */
 
-#ifndef _com_myfridget_LLBUFFEREDBYTEINPUTSTREAM_H
-#define	_com_myfridget_LLBUFFEREDBYTEINPUTSTREAM_H
+#ifndef _com_myfridget_LLBUFFEREDBITINPUTSTREAM_H
+#define	_com_myfridget_LLBUFFEREDBITINPUTSTREAM_H
 
 #include "LLInputStream.h"
 
 namespace com_myfridget
 {
-    class LLBufferedByteInputStream : public LLInputStream
+    class LLBufferedBitInputStream : public LLInputStream
     {
 
         public:
-            LLBufferedByteInputStream(LLInputStream* in, unsigned char* buf, int len);
+            LLBufferedBitInputStream(LLInputStream* in, unsigned char* buf, int len);
 
-            virtual unsigned char readByte();
             virtual bool readBit();
             
             // BEGIN IMPLEMENTATION OF INPUTSTREAM
             virtual int read(unsigned char* b, int len);
+            virtual unsigned char read();
             virtual void close();
             virtual bool eos();
             // END IMPLEMENTATION OF INPUTSTREAM
@@ -38,5 +38,5 @@ namespace com_myfridget
     };
 }
 
-#endif	/* _com_myfridget_LLBUFFEREDBYTEINPUTSTREAM_H */
+#endif	/* _com_myfridget_LLBUFFEREDBITINPUTSTREAM_H */
 

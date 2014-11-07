@@ -8,13 +8,11 @@
 #include "LLInflateInputStream.h"
 
 #include <cstdio>
-#include "LLBufferedByteInputStream.h"
-#include "LLInputStream.h"
 
 namespace com_myfridget
 {
 
-    LLInflateInputStream::LLInflateInputStream(LLBufferedByteInputStream* in) 
+    LLInflateInputStream::LLInflateInputStream(LLBufferedBitInputStream* in) 
     : in(in), dictionary(NULL), dictionarySize(0) {
     }
     
@@ -23,48 +21,69 @@ namespace com_myfridget
     }
 
     int LLInflateInputStream::read(unsigned char* b, int len) {
+		int count;
+		for (count=0; count<len && !in->eos(); count++) {
+			b[count] = read();
+		}
+        return count;
+    }
+    
+    unsigned char LLInflateInputStream::read() {
         if (!dictionary) buildDictionary();
-        return 0;
+		return inflateNextByte();
     }
     
     void LLInflateInputStream::buildDictionary() {
         // first byte in stream must be dictionary size:
-        unsigned char size = in->readByte();
-        printf("DICTIONARY SIZE %d\n", size);
-        dictionary = new DictionaryEntry[size];
-        dictionarySize = size;
+        dictionarySize = in->read();
+        printf("DICTIONARY SIZE %d\n", dictionarySize);
+        dictionary = new unsigned char[dictionarySize];
+         
+		 // read the number of symbols per length
         int count = 0;
         int index = 0;
-        unsigned int code = 1;
-        while (count < size) {
-            code <<= 1;
-            int c = in->readByte(); // number of symbols of current len
-            count += c;
-            for (int i=0; i<c; i++) {
-                dictionary[index++].code = code;
-                code++;
-            }
+        while (count < dictionarySize) {
+            prefixLengths[index] = in->read();
+            count += prefixLengths[index];
+			index++;
         }
         // now read the symbols:
-        for (int i=0; i<size; i++) {
-            dictionary[i].symbol = in->readByte();
+        for (int i=0; i<dictionarySize; i++) {
+            dictionary[i] = in->read();
         }
         printDictionary();
     }
+	
+	unsigned char LLInflateInputStream::inflateNextByte() {	
+		unsigned int read = 1; // holds current bits read from stream
+		unsigned int code = 1; // holds huffman code to compare with
+		int symbolPos = 0; // current index of symbol in dictionary
+		for (int i=0; i<com_myfridget_LLINFLATEINPUTSTREAM_MAX_PREFIX_LEN; i++) {
+			code <<= 1; read<<=1;
+			read |= in->readBit() ? 1 : 0;
+			int noOfSymbols = prefixLengths[i];
+			for (int j=0; j<noOfSymbols; j++) {
+			    // compare against all symbols of that length:
+				if (read == code) return dictionary[symbolPos]; // found
+				code++; symbolPos++;
+			}
+		}
+		return 0; // must never happen
+	}
 
-    static char* binary_fmt(unsigned int x, char* pbuf, int bufsize)
-    {
-        char *s = pbuf+bufsize; *--s=0;
-        do {*--s='0'+x%2; x>>=1;} while (x);
-        return s;
-    }
+//    static char* binary_fmt(unsigned int x, char* pbuf, int bufsize)
+//    {
+//        char *s = pbuf+bufsize; *--s=0;
+//        do {*--s='0'+x%2; x>>=1;} while (x);
+//        return s;
+//    }
     
-    void LLInflateInputStream::printDictionary() {
-        char buf[32];
-        for (int i=0; i<dictionarySize; i++) {
-            printf("%u\t%s\n", dictionary[i].symbol, binary_fmt(dictionary[i].code, buf, 32)+1);
-        }
-    }
+//    void LLInflateInputStream::printDictionary() {
+//        char buf[32];
+//        for (int i=0; i<dictionarySize; i++) {
+//            printf("%u\t%s\n", dictionary[i].symbol, binary_fmt(dictionary[i].code, buf, 32)+1);
+//        }
+//    }
     
     void LLInflateInputStream::close() {
         

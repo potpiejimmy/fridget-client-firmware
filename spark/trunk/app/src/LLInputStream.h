@@ -61,6 +61,16 @@ namespace com_myfridget
 		virtual int read(unsigned char* b, int len) = 0;
 
 		/**
+		 * Reads the next byte of data from the input stream. The value byte is
+         * returned as an int in the range 0 to 255. If no byte is available because
+		 * the end of the stream has been reached, the value -1 is returned.
+         * This method blocks until input data is available, the end of the stream
+         * is detected, or an exception is thrown. A subclass must provide an
+		 * implementation of this method.
+	     */
+		virtual unsigned char read() = 0;
+
+		/**
 		 * Closes this input stream and releases any system resources associated
 		 * with the stream.
 		 *
