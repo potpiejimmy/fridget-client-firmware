@@ -54,6 +54,9 @@
 /* Read buffer */
 extern char _buf[_BUF_SIZE];
 
+// The size of an EPD image
+#define SIZE_EPD_IMAGE     30000
+
 void delayRealMicros(unsigned long us);
 
 #endif /* APPLICATION_H_ */

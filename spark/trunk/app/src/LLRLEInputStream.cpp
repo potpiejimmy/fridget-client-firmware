@@ -11,7 +11,7 @@
 namespace com_myfridget
 {
     LLRLEInputStream::LLRLEInputStream(LLInputStream* in)
-        : in(in), currentBit(0), currentLen(0) {
+        : in(in), compression(-1), currentBit(0), currentLen(0) {
         
     }
 
@@ -22,6 +22,8 @@ namespace com_myfridget
     }
     
     unsigned char LLRLEInputStream::read() {
+        if (compression==-1) compression = in->read();
+        if (!compression) return in->read();
         if (currentLen>=8) { // speed optimization
             currentLen -= 8;
             return currentBit ? 0xFF : 0x00;

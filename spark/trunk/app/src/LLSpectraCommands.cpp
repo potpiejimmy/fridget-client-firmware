@@ -9,8 +9,6 @@
 
 // include application.h for global definitions
 #include "application.h"
-// use LLFlashUtil.h for external flash memory access
-#include "LLFlashUtil.h"
 
 // this is the spark pins we will use beside the SPI pins.
 // for the meaning of EN and CS and BUSY, refer to ApplicationNote_EPD441_Spectra_v01.pdf in common/docs/Specifications
@@ -24,7 +22,7 @@ namespace com_myfridget
     void InitializeSPI();
     void UninitializeSPI();
 
-    void ShowImage(uint32_t address)
+    void ShowImage(LLInputStream* in)
     {
         InitializeSPI();
        // delay(1000); //TODO: unclear how much time we need after SPI initialization. Maybe 0 is ok. To be tried....

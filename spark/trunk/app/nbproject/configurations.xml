@@ -134,10 +134,12 @@
           </df>
         </df>
         <df name="inc">
+          <in>LLFlashInputStream.h</in>
           <in>LLFlashUtil.h</in>
           <in>LLRemoteLog.h</in>
         </df>
         <df name="src">
+          <in>LLFlashInputStream.cpp</in>
           <in>LLFlashUtil.cpp</in>
           <in>LLRemoteLog.cpp</in>
           <in>application.cpp</in>
@@ -658,6 +660,11 @@
             tool="1"
             flavor2="4">
       </item>
+      <item path="../../../../../spark/core-firmware/inc/LLFlashInputStream.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
       <item path="../../../../../spark/core-firmware/inc/LLFlashUtil.h"
             ex="false"
             tool="3"
@@ -666,6 +673,11 @@
       <item path="../../../../../spark/core-firmware/inc/LLRemoteLog.h"
             ex="false"
             tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../../../../spark/core-firmware/src/LLFlashInputStream.cpp"
+            ex="false"
+            tool="1"
             flavor2="0">
       </item>
       <item path="../../../../../spark/core-firmware/src/LLFlashUtil.cpp"

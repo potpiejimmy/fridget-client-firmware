@@ -11,6 +11,7 @@
 //uses the application.h
 //addtionally we reuse here the global _buf variable and _BUF_SIZE defined in application.cpp (not really nice, I know. Come on, it's firmware...)
 #include "application.h"
+#include "LLInputStream.h"
 
 // Shows the image on spectra display that starts at the given address of external flash memory.
 // I assume that starting from this address 30KB data is available describing the image.
@@ -20,7 +21,7 @@
 // See spec ApplicationNote_EPD441_Spectra_v01.pdf in common/docs/Specifications
 namespace com_myfridget
 {
-    void ShowImage(uint32_t address);
+    void ShowImage(LLInputStream* in);
 }
 
 #endif	/* _com_myfridget_LLSPECTRACOMMANDS_H_ */

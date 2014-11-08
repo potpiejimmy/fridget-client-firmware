@@ -30,6 +30,10 @@
 #include "LLWebRequest.h"
 #include "LLFlashUtil.h"
 #include "LLSpectraCommands.h"
+#include "LLFlashInputStream.h"
+#include "LLBufferedBitInputStream.h"
+#include "LLInflateInputStream.h"
+#include "LLRLEInputStream.h"
 
 // user states
 #define USER_STATE_OFFLINE                0
@@ -49,8 +53,6 @@
 #define SERVER_HOST_DEBUGNAME "www.doogetha.com"
 #define SERVER_PORT 80
 
-// The size of an EPD image
-#define SIZE_EPD_IMAGE     30000
 // The size of flash memory to reserve for one EPD image, must be a multiple of 4KB
 #define SIZE_EPD_SEGMENT  0x8000
 
@@ -77,92 +79,6 @@ void updateDisplay();
 void updateDisplayAndSleep();
 void flashTestImage();
 
-/* ############## POWER DEBUGGING TESTING ONLY ################# */
-//int pdAfioOn(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE); return 0;}
-//int pdAfioOff(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, DISABLE); return 0;}
-//int pdGpioOn(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB|RCC_APB2Periph_GPIOC|RCC_APB2Periph_GPIOD|RCC_APB2Periph_GPIOE|RCC_APB2Periph_GPIOF|RCC_APB2Periph_GPIOG, ENABLE); return 0;}
-//int pdGpioOff(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB|RCC_APB2Periph_GPIOC|RCC_APB2Periph_GPIOD|RCC_APB2Periph_GPIOE|RCC_APB2Periph_GPIOF|RCC_APB2Periph_GPIOG, DISABLE); return 0;}
-//int pdAdcOn(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1|RCC_APB2Periph_ADC2|RCC_APB2Periph_ADC3, ENABLE); return 0;}
-//int pdAdcOff(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1|RCC_APB2Periph_ADC2|RCC_APB2Periph_ADC3, DISABLE); return 0;}
-//int pdTimOn(String args) {
-//    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1|RCC_APB2Periph_TIM8|RCC_APB2Periph_TIM9|RCC_APB2Periph_TIM10|RCC_APB2Periph_TIM11|RCC_APB2Periph_TIM15|RCC_APB2Periph_TIM16|RCC_APB2Periph_TIM17, ENABLE);
-//    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2|RCC_APB1Periph_TIM3|RCC_APB1Periph_TIM4|RCC_APB1Periph_TIM5|RCC_APB1Periph_TIM6|RCC_APB1Periph_TIM7|RCC_APB1Periph_TIM12|RCC_APB1Periph_TIM13|RCC_APB1Periph_TIM14, ENABLE);
-//    return 0;
-//}
-//int pdTimOff(String args) {
-//    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1|RCC_APB2Periph_TIM8|RCC_APB2Periph_TIM9|RCC_APB2Periph_TIM10|RCC_APB2Periph_TIM11|RCC_APB2Periph_TIM15|RCC_APB2Periph_TIM16|RCC_APB2Periph_TIM17, DISABLE);
-//    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2|RCC_APB1Periph_TIM3|RCC_APB1Periph_TIM4|RCC_APB1Periph_TIM5|RCC_APB1Periph_TIM6|RCC_APB1Periph_TIM7|RCC_APB1Periph_TIM12|RCC_APB1Periph_TIM13|RCC_APB1Periph_TIM14, DISABLE);
-//    return 0;
-//}
-//int pdSpi1On(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE); return 0;}
-//int pdSpi1Off(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, DISABLE); return 0;}
-//int pdUsart1On(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE); return 0;}
-//int pdUsart1Off(String args) {RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, DISABLE); return 0;}
-//int pdWwdgOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_WWDG, ENABLE); return 0;}
-//int pdWwdgOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_WWDG, DISABLE); return 0;}
-//int pdSpi23On(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2|RCC_APB1Periph_SPI3, ENABLE); return 0;}
-//int pdSpi23Off(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2|RCC_APB1Periph_SPI3, DISABLE); return 0;}
-//int pdUsart2345On(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2|RCC_APB1Periph_USART3/*|RCC_APB1Periph_USART4|RCC_APB1Periph_USART5*/, ENABLE); return 0;}
-//int pdUsart2345Off(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2|RCC_APB1Periph_USART3/*|RCC_APB1Periph_USART4|RCC_APB1Periph_USART5*/, DISABLE); return 0;}
-//int pdI2cOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1|RCC_APB1Periph_I2C2, ENABLE); return 0;}
-//int pdI2cOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1|RCC_APB1Periph_I2C2, DISABLE); return 0;}
-//int pdUsbOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_USB, ENABLE); return 0;}
-//int pdUsbOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_USB, DISABLE); return 0;}
-//int pdCanOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE); return 0;}
-//int pdCanOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, DISABLE); return 0;}
-//int pdBkpOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_BKP, ENABLE); return 0;}
-//int pdBkpOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_BKP, DISABLE); return 0;}
-//int pdPwrOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE); return 0;}
-//int pdPwrOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, DISABLE); return 0;}
-//int pdDacOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, ENABLE); return 0;}
-//int pdDacOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, DISABLE); return 0;}
-//int pdCecOn(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_CEC, ENABLE); return 0;}
-//int pdCecOff(String args) {RCC_APB1PeriphClockCmd(RCC_APB1Periph_CEC, DISABLE); return 0;}
-int sysclk1() {RCC_HCLKConfig(RCC_SYSCLK_Div1); clockDivisor=1; return 0;}
-int sysclk2() {RCC_HCLKConfig(RCC_SYSCLK_Div2); clockDivisor=2; return 0;}
-int sysclk4() {RCC_HCLKConfig(RCC_SYSCLK_Div4); clockDivisor=4; return 0;}
-int sysclk8() {RCC_HCLKConfig(RCC_SYSCLK_Div8); clockDivisor=8; return 0;}
-int sysclk16() {RCC_HCLKConfig(RCC_SYSCLK_Div16); clockDivisor=16; return 0;}
-int sysclk64() {RCC_HCLKConfig(RCC_SYSCLK_Div64); clockDivisor=64; return 0;}
-int sysclk128() {RCC_HCLKConfig(RCC_SYSCLK_Div128); clockDivisor=128; return 0;}
-int sysclk256() {RCC_HCLKConfig(RCC_SYSCLK_Div256); clockDivisor=256; return 0;}
-int sysclk512() {RCC_HCLKConfig(RCC_SYSCLK_Div512); clockDivisor=512; return 0;}
-int pdFlashTest(String args) {flashTestImage(); return 0;}
-int pdUpdateDisplay(String args) {updateDisplay(); return 0;}
-int powerDebug(String args) {
-//    if (args.equals("pdAfioOn")) return pdAfioOn(args); if (args.equals("pdAfioOff")) return pdAfioOff(args);
-//    if (args.equals("pdGpioOn")) return pdGpioOn(args); if (args.equals("pdGpioOff")) return pdGpioOff(args);
-//    if (args.equals("pdAdcOn")) return pdAdcOn(args); if (args.equals("pdAdcOff")) return pdAdcOff(args);
-//    if (args.equals("pdTimOn")) return pdTimOn(args); if (args.equals("pdTimOff")) return pdTimOff(args);
-//    if (args.equals("pdSpi1On")) return pdSpi1On(args); if (args.equals("pdSpi1Off")) return pdSpi1Off(args);
-//    if (args.equals("pdUsart1On")) return pdUsart1On(args); if (args.equals("pdUsart1Off")) return pdUsart1Off(args);
-//    if (args.equals("pdWwdgOn")) return pdWwdgOn(args); if (args.equals("pdWwdgOff")) return pdWwdgOff(args);
-//    if (args.equals("pdSpi23On")) return pdSpi23On(args); if (args.equals("pdSpi23Off")) return pdSpi23Off(args);
-//    if (args.equals("pdUsart2345On")) return pdUsart2345On(args); if (args.equals("pdUsart2345Off")) return pdUsart2345Off(args);
-//    if (args.equals("pdI2cOn")) return pdI2cOn(args); if (args.equals("pdI2cOff")) return pdI2cOff(args);
-//    if (args.equals("pdUsbOn")) return pdUsbOn(args); if (args.equals("pdUsbOff")) return pdUsbOff(args);
-//    if (args.equals("pdCanOn")) return pdCanOn(args); if (args.equals("pdCanOff")) return pdCanOff(args);
-//    if (args.equals("pdBkpOn")) return pdBkpOn(args); if (args.equals("pdBkpOff")) return pdBkpOff(args);
-//    if (args.equals("pdPwrOn")) return pdPwrOn(args); if (args.equals("pdPwrOff")) return pdPwrOff(args);
-//    if (args.equals("pdDacOn")) return pdDacOn(args); if (args.equals("pdDacOff")) return pdDacOff(args);
-//    if (args.equals("pdCecOn")) return pdCecOn(args); if (args.equals("pdCecOff")) return pdCecOff(args);
-    if (args.equals("sysclk1")) return sysclk1();
-    if (args.equals("sysclk2")) return sysclk2();
-    if (args.equals("sysclk4")) return sysclk4();
-    if (args.equals("sysclk8")) return sysclk8();
-    if (args.equals("sysclk16")) return sysclk16();
-    if (args.equals("sysclk64")) return sysclk64();
-    if (args.equals("sysclk128")) return sysclk128();
-    if (args.equals("sysclk256")) return sysclk256();
-    if (args.equals("sysclk512")) return sysclk512();
-    if (args.equals("pdFlashTest")) return pdFlashTest(args);
-    if (args.equals("pdUpdateDisplay")) return pdUpdateDisplay(args);
-    return 1;
-    
-}
-void setupPowerDebugging() {
-    Spark.function("powerDebug", powerDebug);
-}
 /* ############################################################# */
 
 /* MANUAL: not connecting to Spark cloud, running user-code loop immediately
@@ -173,9 +89,6 @@ SYSTEM_MODE(MANUAL);
 void setup()
 {
     clockDivisor = 1;
-    
-    /* XXX POWER DEBUGGING */
-    setupPowerDebugging();
     
     /* start offline */
     userState = USER_STATE_OFFLINE;
@@ -328,7 +241,16 @@ void onOnline()
 
 void updateDisplay()
 {
-    ShowImage(EEPROM.read(1) * SIZE_EPD_SEGMENT); // XXX
+    const int decodeBufSize = 1024;
+    unsigned char decodeBuf[decodeBufSize];
+    
+    // Now link from FLASH to DECODEBUF to HUFFMAN-INFLATE to RLE-INFLATE
+    LLFlashInputStream flashIn(EEPROM.read(1) * SIZE_EPD_SEGMENT); // XXX
+    LLBufferedBitInputStream bufIn(&flashIn, decodeBuf, decodeBufSize);
+    LLInflateInputStream inflateIn(&bufIn);
+    LLRLEInputStream rleIn(&inflateIn);
+    
+    ShowImage(&rleIn);
 }
 
 void updateDisplayAndSleep()
@@ -374,9 +296,12 @@ void flashTestImage()
                 do
                 {
                     int readSoFar = 0;
-                    while (readSoFar < SIZE_EPD_IMAGE)
+                    char imgLenBuf[2]; // two bytes of length
+                    requester.readAll(imgLenBuf, 2);
+                    int imgLen = ((int)imgLenBuf[0])<<8|imgLenBuf[1];
+                    while (readSoFar < imgLen)
                     {
-                        int shouldRead = SIZE_EPD_IMAGE - readSoFar;
+                        int shouldRead = imgLen - readSoFar;
                         if (shouldRead > _BUF_SIZE) shouldRead = _BUF_SIZE;
                         debug(String("Reading image data ") + index + " [" + readSoFar + "-" + (readSoFar + shouldRead - 1) + "]");
                         int readNow = requester.readAll(_buf, shouldRead);

@@ -27,6 +27,7 @@ namespace com_myfridget
 
         private:
             LLInputStream* in;
+            int compression;
             unsigned char currentBit;
             unsigned int currentLen;
             void decodeNext();
