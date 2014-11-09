@@ -56,6 +56,9 @@
 // The size of flash memory to reserve for one EPD image, must be a multiple of 4KB
 #define SIZE_EPD_SEGMENT  0x8000
 
+// is power-on and power-off attiny controlled?
+#define ATTINY_CONTROLLED_POWER
+
 using namespace com_myfridget;
 
 /* Allocate read buffer (Note: declared in application.h) */
@@ -95,6 +98,10 @@ void setup()
 
     /* Activate the LED output PIN */
     pinMode(D7, OUTPUT);
+    
+    /* Active D4 for Attiny notification output */
+    pinMode(D4, OUTPUT);
+    digitalWrite(D4, HIGH);
 
 #ifdef _SERIAL_DEBUGGING_
     /* For serial debugging only: */
@@ -129,8 +136,7 @@ void loop()
             userState = USER_STATE_CONNECTING;
             debug("State: USER_STATE_CONNECTING");
         } else {
-            // just wake and sleep:
-            WiFi.off();
+            // just update display and sleep:
             updateDisplayAndSleep();
         }
         break;
@@ -162,7 +168,7 @@ void loop()
         
     case USER_STATE_ONLINE_WITH_CLOUD:
         // call Spark.process() for cloud operations
-		Spark.process();
+        Spark.process();
         break;
     }
 }
@@ -255,6 +261,9 @@ void updateDisplay()
 
 void updateDisplayAndSleep()
 {
+    // WiFi aus
+    WiFi.off();
+    
     // runtertakten:
     RCC_HCLKConfig(RCC_SYSCLK_Div8);
     clockDivisor=8;
@@ -272,8 +281,12 @@ void updateDisplayAndSleep()
     debug(String("Increased cycle no. to ") + cycle);
     EEPROM.write(1, cycle);
     
-    WiFi.disconnect();
+#ifdef ATTINY_CONTROLLED_POWER
+    digitalWrite(D4, LOW);    // Notify Attiny
+    Spark.sleep(D0, CHANGE, sleepTime); // STOP MODE
+#else    
     Spark.sleep(SLEEP_MODE_DEEP, sleepTime);
+#endif
 }
 
 void flashTestImage()
