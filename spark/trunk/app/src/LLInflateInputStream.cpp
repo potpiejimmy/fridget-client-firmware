@@ -7,13 +7,11 @@
 
 #include "LLInflateInputStream.h"
 
-#include <cstdio>
-
 namespace com_myfridget
 {
 
     LLInflateInputStream::LLInflateInputStream(LLBufferedBitInputStream* in) 
-    : in(in), dictionary(NULL), dictionarySize(0) {
+    : in(in), dictionary(0), dictionarySize(0) {
     }
     
     LLInflateInputStream::~LLInflateInputStream() {
@@ -34,7 +32,7 @@ namespace com_myfridget
     void LLInflateInputStream::buildDictionary() {
         // first byte in stream must be dictionary size:
         dictionarySize = in->read();
-        printf("DICTIONARY SIZE %d\n", dictionarySize);
+        //printf("DICTIONARY SIZE %d\n", dictionarySize);
         dictionary = new unsigned char[dictionarySize];
          
 		 // read the number of symbols per length

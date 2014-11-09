@@ -41,20 +41,22 @@ namespace com_myfridget
         delayRealMicros(5000); // min 5
         
         // now start writing the image
-        int bufIndex;
-        int flashIndex=0;
+        int bufIndex=0;
+        int avail=0;
         for (int y = 0; y<600; y++)
         {
             for (int x = 0; x<50; x++)
             {
-                bufIndex = (x+y*50)%_BUF_SIZE;
-                if (bufIndex == 0)
+                if (bufIndex == avail)
                 {
-                    LLFlashUtil::read((uint8_t*)_buf, address+flashIndex*_BUF_SIZE, _BUF_SIZE);
-                    flashIndex++;
+                    int need = (599-y)*50+(50-x);
+                    if (need > _BUF_SIZE) need = _BUF_SIZE;
+                    avail = in->read((unsigned char*)_buf, need);
+                    bufIndex = 0;
                 }
                 SPI.transfer(_buf[bufIndex]);
                 delayMicroseconds(1); //min 1
+                bufIndex++;
             }
             delayRealMicros(1000); //typ 1
             if (y==299) delayRealMicros(1000);  // this one definitely is required between the two frames. Otherwise display shows nonsense.

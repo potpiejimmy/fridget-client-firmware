@@ -3,11 +3,8 @@
  * Author: thorsten
  *
  */
-#include <stdio.h>
-
 #include "LLFlashUtil.h"
 
-#include <cstring>
 #include "application.h"
 #include "sst25vf_spi.h"
 
