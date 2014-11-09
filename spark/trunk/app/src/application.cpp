@@ -41,6 +41,7 @@
 #define USER_STATE_CONNECTED_AWAITING_IP  2
 #define USER_STATE_ONLINE                 3
 #define USER_STATE_ONLINE_WITH_CLOUD      4
+#define USER_STATE_IDLE                   5
 
 // connect modes (cloud on/off)
 #define USER_CONNECT_MODE_CLOUD_ON   1
@@ -58,6 +59,8 @@
 
 // is power-on and power-off attiny controlled?
 #define ATTINY_CONTROLLED_POWER
+// EPD TCON board connected to core?
+#define EPD_TCON_CONNECTED
 
 using namespace com_myfridget;
 
@@ -170,6 +173,10 @@ void loop()
         // call Spark.process() for cloud operations
         Spark.process();
         break;
+    
+    case USER_STATE_IDLE:
+        // do nothing in idle mode
+        break;
     }
 }
 
@@ -256,17 +263,23 @@ void updateDisplay()
     LLInflateInputStream inflateIn(&bufIn);
     LLRLEInputStream rleIn(&inflateIn);
     
+#ifdef EPD_TCON_CONNECTED
     ShowImage(&rleIn);
+#endif
 }
 
 void updateDisplayAndSleep()
 {
-    // WiFi aus
+    // WiFi und RGB aus
     WiFi.off();
+    RGB.control(true);
+    RGB.color(0);
     
     // runtertakten:
+#ifdef EPD_TCON_CONNECTED
     RCC_HCLKConfig(RCC_SYSCLK_Div8);
     clockDivisor=8;
+#endif
     
     uint8_t cycle = EEPROM.read(1) + 1;
     int sleepTime = ((int)EEPROM.read(2))<<8 | EEPROM.read(3);
@@ -283,8 +296,9 @@ void updateDisplayAndSleep()
     
 #ifdef ATTINY_CONTROLLED_POWER
     digitalWrite(D4, LOW);    // Notify Attiny
-    Spark.sleep(D0, CHANGE, sleepTime); // STOP MODE
-#else    
+    userState = USER_STATE_IDLE;
+    debug("State: USER_STATE_IDLE");
+#else
     Spark.sleep(SLEEP_MODE_DEEP, sleepTime);
 #endif
 }
