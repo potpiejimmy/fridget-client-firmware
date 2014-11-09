@@ -289,7 +289,7 @@ void updateDisplayAndSleep()
     
     // deep-sleep for sleepTime seconds
     String msg = String("Going to sleep for ") + sleepTime + " sec.";
-    debug(msg); log.log(msg);
+    debug(msg);
     
     debug(String("Increased cycle no. to ") + cycle);
     EEPROM.write(1, cycle);
