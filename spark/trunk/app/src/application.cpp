@@ -61,6 +61,8 @@
 #define ATTINY_CONTROLLED_POWER
 // EPD TCON board connected to core?
 #define EPD_TCON_CONNECTED
+// Disable all logging and parameter requests
+#define FRIDGET_SPEED_OPTIMIZED
 
 using namespace com_myfridget;
 
@@ -182,10 +184,12 @@ void loop()
 
 int getServerParam(const char* param, int def)
 {
+#ifndef FRIDGET_SPEED_OPTIMIZED
     char readBuf[16];
     char url[128];
     
     log.log(String(">>> Requesting parameter ") + param);
+    debug(String(">>> Requesting parameter ") + param);
     
     snprintf(url, 128, "/fridget/res/debug/%s/?param=%s", Spark.deviceID().c_str(), param);
     if (requester.request("GET", url, NULL, readBuf, 16))
@@ -194,6 +198,7 @@ int getServerParam(const char* param, int def)
         int result = atoi(readBuf);
         if (result != 0) return result;
     }
+#endif
     // failed, return default:
     return def;
 }
@@ -227,7 +232,7 @@ void onOnline()
     
     if (establishServerConnection()) {
         debug(String("Connected to ") + SERVER_HOST_DEBUGNAME);
-        connectMode = getServerParam("connectmode", USER_CONNECT_MODE_CLOUD_ON);
+        connectMode = getServerParam("connectmode", USER_CONNECT_MODE_CLOUD_OFF);
     } else {
         debug("Server not available, connecting to cloud.");
     }
@@ -243,8 +248,8 @@ void onOnline()
         return;
     }
     
-    int sleepTime = getServerParam("sleeptime", 30);
-    int connectCycle = getServerParam("connectcycle", 1);
+    int sleepTime = getServerParam("sleeptime", 1);
+    int connectCycle = getServerParam("connectcycle", 24);
     
     EEPROM.write(0, (uint8_t)connectCycle);
     EEPROM.write(1, (uint8_t)0);
@@ -270,6 +275,7 @@ void updateDisplay()
 
 void updateDisplayAndSleep()
 {
+    debug("Disabling WiFi and LED");
     // WiFi und RGB aus
     WiFi.off();
     RGB.control(true);
@@ -285,11 +291,11 @@ void updateDisplayAndSleep()
     int sleepTime = ((int)EEPROM.read(2))<<8 | EEPROM.read(3);
  
     // write the image from flash to the display:
+    debug("Updating display");
     updateDisplay();
     
     // deep-sleep for sleepTime seconds
-    String msg = String("Going to sleep for ") + sleepTime + " sec.";
-    debug(msg);
+    debug(String("Going to sleep for ") + sleepTime + " sec.");
     
     debug(String("Increased cycle no. to ") + cycle);
     EEPROM.write(1, cycle);
@@ -298,6 +304,9 @@ void updateDisplayAndSleep()
     digitalWrite(D4, LOW);    // Notify Attiny
     userState = USER_STATE_IDLE;
     debug("State: USER_STATE_IDLE");
+    
+    /* Request to enter STOP mode with regulator in low power mode */
+    PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFE);
 #else
     Spark.sleep(SLEEP_MODE_DEEP, sleepTime);
 #endif
@@ -307,9 +316,11 @@ void flashTestImage()
 {
     char url[128];
     
-    if (getServerParam("flashimage", 0))
+    if (getServerParam("flashimage", 1))
     {
+#ifndef FRIDGET_SPEED_OPTIMIZED
         log.log("Requesting image data and writing to flash...");
+#endif
         int index = 0;
         bool done = FALSE;
         snprintf(url, 128, "/fridget/res/img/%s/", Spark.deviceID().c_str());
@@ -351,10 +362,12 @@ void flashTestImage()
                 } while (!done);
             }
             requester.stop();
+#ifndef FRIDGET_SPEED_OPTIMIZED
             log.log(String("Wrote ") + overallSize + " bytes to flash.");
             if (badBlocks > 0) {
                 log.log(String("XXX BAD FLASH BLOCKS: ") + badBlocks);
             }
+#endif
         }
     }
 }
