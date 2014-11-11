@@ -30,7 +30,11 @@ namespace com_myfridget
             int compression;
             unsigned char currentBit;
             unsigned int currentLen;
+            unsigned char nibble;
+            bool haveNibble;
+            int readBitPos;
             void decodeNext();
+            unsigned char readNibble();
     };
 }
 
