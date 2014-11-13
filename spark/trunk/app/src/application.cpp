@@ -184,21 +184,23 @@ void loop()
 
 int getServerParam(const char* param, int def)
 {
-#ifndef FRIDGET_SPEED_OPTIMIZED
     char readBuf[16];
     char url[128];
     
+#ifndef FRIDGET_SPEED_OPTIMIZED
     log.log(String(">>> Requesting parameter ") + param);
+#endif
     debug(String(">>> Requesting parameter ") + param);
     
     snprintf(url, 128, "/fridget/res/debug/%s/?param=%s", Spark.deviceID().c_str(), param);
     if (requester.request("GET", url, NULL, readBuf, 16))
     {
+#ifndef FRIDGET_SPEED_OPTIMIZED
         log.log(String("<<< Received from server: ") + readBuf);
+#endif
         int result = atoi(readBuf);
         if (result != 0) return result;
     }
-#endif
     // failed, return default:
     return def;
 }
@@ -232,7 +234,7 @@ void onOnline()
     
     if (establishServerConnection()) {
         debug(String("Connected to ") + SERVER_HOST_DEBUGNAME);
-        connectMode = getServerParam("connectmode", USER_CONNECT_MODE_CLOUD_OFF);
+        connectMode = getServerParam("connectmode", USER_CONNECT_MODE_CLOUD_ON);
     } else {
         debug("Server not available, connecting to cloud.");
     }
@@ -248,8 +250,8 @@ void onOnline()
         return;
     }
     
-    int sleepTime = getServerParam("sleeptime", 1);
-    int connectCycle = getServerParam("connectcycle", 24);
+    int sleepTime = 2;//getServerParam("sleeptime", 10);
+    int connectCycle = getServerParam("connectcycle", 3);
     
     EEPROM.write(0, (uint8_t)connectCycle);
     EEPROM.write(1, (uint8_t)0);
@@ -306,7 +308,11 @@ void updateDisplayAndSleep()
     debug("State: USER_STATE_IDLE");
     
     /* Request to enter STOP mode with regulator in low power mode */
-    PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFE);
+//    for (int i=0; i<TOTAL_PINS; i++) {
+//        detachInterrupt(i);
+//        pinMode(i, OUTPUT);
+//    }
+    PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 #else
     Spark.sleep(SLEEP_MODE_DEEP, sleepTime);
 #endif
