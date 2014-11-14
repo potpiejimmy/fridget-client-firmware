@@ -198,6 +198,7 @@ int getServerParam(const char* param, int def)
 #ifndef FRIDGET_SPEED_OPTIMIZED
         log.log(String("<<< Received from server: ") + readBuf);
 #endif
+        debug(String("<<< Received from server: ") + readBuf);
         int result = atoi(readBuf);
         if (result != 0) return result;
     }
@@ -283,6 +284,9 @@ void updateDisplayAndSleep()
     RGB.control(true);
     RGB.color(0);
     
+    debug("Set IWDG maximum timeout (about 26 sec.)");
+    IWDG_Reset_Enable(0xFFFF); // set IWDG timeout to a maximum value
+    
     // runtertakten:
 #ifdef EPD_TCON_CONNECTED
     RCC_HCLKConfig(RCC_SYSCLK_Div8);
@@ -307,11 +311,6 @@ void updateDisplayAndSleep()
     userState = USER_STATE_IDLE;
     debug("State: USER_STATE_IDLE");
     
-    /* Request to enter STOP mode with regulator in low power mode */
-//    for (int i=0; i<TOTAL_PINS; i++) {
-//        detachInterrupt(i);
-//        pinMode(i, OUTPUT);
-//    }
     PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 #else
     Spark.sleep(SLEEP_MODE_DEEP, sleepTime);
@@ -322,7 +321,7 @@ void flashTestImage()
 {
     char url[128];
     
-    if (getServerParam("flashimage", 1))
+    if (getServerParam("flashimage", 0))
     {
 #ifndef FRIDGET_SPEED_OPTIMIZED
         log.log("Requesting image data and writing to flash...");

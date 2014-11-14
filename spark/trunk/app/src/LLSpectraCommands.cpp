@@ -64,13 +64,13 @@ namespace com_myfridget
         digitalWrite(TC_CS, HIGH);
 		delayRealMicros(200000);
 		UninitializeSPI();
-        while (digitalRead(TC_BUSY)==HIGH)        
-        {
-            delayRealMicros(200000);
-        }
-
-        digitalWrite(TC_CS, LOW);
-        digitalWrite(TC_EN, LOW);
+//        while (digitalRead(TC_BUSY)==HIGH)        
+//        {
+//            delayRealMicros(200000);
+//        }
+//
+//        digitalWrite(TC_CS, LOW);
+//        digitalWrite(TC_EN, LOW);
     }
   
     
