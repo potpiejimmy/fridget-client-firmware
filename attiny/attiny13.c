@@ -13,9 +13,9 @@
 #include <avr/wdt.h>
 //#include <avr/power.h>
 
-void wdt_init() {
+void wdt_init(uint8_t timeout) {
 	cli();
-	wdt_enable(WDTO_8S);
+	wdt_enable(timeout);
 	//MCUSR |= (1<<WDRF);
 	WDTCR |= (1<<WDE) | (1<<WDTIE);   // Enable watchdog
 	wdt_reset();
@@ -36,7 +36,7 @@ void sleep_now() {
 
 int main(void)
 {
-	int i = 0;
+	// define the port usage (PINB0 is output. Rest is input)
 	DDRB=0b00000001;
 	//MCUCR=0b00010000;
 
@@ -48,34 +48,32 @@ int main(void)
 
 	//wdt_init();
 	
+	// disable power and wait three seconds to ensure stable start of LDO and spark after three seconds
+	// this time can surely be reduced, but it will only play a role after plugging system to battery
 	PORTB = 0b00000000;  // disable LDO power
 	_delay_ms(3000);
 	
     while(1)
     {
+		// turn on the LDO which will power the Spark
 		PORTB = 0b00000001;
+		// give Spark three seonds to start and wait for PinB1 which is the busy pin of the spark
+		// we also wait for PinB2 which is the busy pin of the spectra display
 		_delay_ms(3000);
-		while (PINB & (1 << PINB1))
+		while (PINB & (1 << PINB1) || PINB & (1 << PINB2))
 		{
-			_delay_ms(200);
+			wdt_init(WDTO_250MS);
+			sleep_now();
 		}
+		// now spark and display is ready...turn off power...
 		PORTB = 0b00000000;  // disable LDO power
-//		_delay_ms(20000);
-//		_delay_ms(20000);
-		//set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-//
-		  //cli();
-		  //WDTCR |= (1<<WDTIE); // WDT Interrupt enable
-		  //sei();
-//		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-		//sleep_enable();
-	//	sleep_mode();
 
-		wdt_init();
-		sleep_now();
-//		wdt_disable();
-        //TODO:: Please write your application code 
-		i++;
+		// and wait long time till next spark action...
+		for (int i=0 ; i<2; i++)
+		{
+			wdt_init(WDTO_8S);
+			sleep_now();
+		}
     }
 }
 
@@ -88,6 +86,7 @@ ISR(PCINT0_vect)	     // interrupt service routine
 }
 */
 
+// this one is needed as watchdog wakeup routine. Removing this will not work.
 ISR(WDT_vect)
 {
 //	sleep_disable();          // Disable Sleep on Wakeup
