@@ -11,8 +11,15 @@
 
 namespace com_myfridget
 {
-    LLMap::LLMap(int capacity, char* input) :
-        size(0), entries(new char*[capacity]) {
+    LLMap::LLMap(int capacity) :
+        size(0), capacity(capacity), entries(new char*[capacity]) {
+    }
+    LLMap::~LLMap() {
+        delete entries;
+    }
+    
+    void LLMap::parse(char* input) {
+        size = 0;
         char* begin = input;
         while (*input && size < capacity) {
             if (*input==((size%2)?';':'=')) {
@@ -22,9 +29,6 @@ namespace com_myfridget
             }
             input++;
         }
-    }
-    LLMap::~LLMap() {
-        delete entries;
     }
     
     const char* LLMap::getValue(const char* key) {

@@ -17,13 +17,14 @@ namespace com_myfridget
     class LLMap
     {
     public:
-        LLMap(int capacity, char* input);
+        LLMap(int capacity);
         virtual ~LLMap();
         
+        virtual void parse(char* input);
         virtual const char* getValue(const char* key);
         
     private:
-        int size;
+        int size, capacity;
         char** entries;
     };
 }

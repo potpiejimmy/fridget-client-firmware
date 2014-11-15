@@ -26,7 +26,7 @@
 /* Includes ------------------------------------------------------------------*/  
 #include "application.h"
 
-#include "LLRemoteLog.h"
+#include "LLMap.h"
 #include "LLWebRequest.h"
 #include "LLFlashUtil.h"
 #include "LLSpectraCommands.h"
@@ -47,36 +47,36 @@
 #define USER_CONNECT_MODE_CLOUD_ON   1
 #define USER_CONNECT_MODE_CLOUD_OFF  2
 
-//#define SERVER_HOST IPAddress(192,168,178,32)
-//#define SERVER_HOST_DEBUGNAME "192.168.178.32"
-//#define SERVER_PORT 8080
-#define SERVER_HOST "www.doogetha.com"
-#define SERVER_HOST_DEBUGNAME "www.doogetha.com"
-#define SERVER_PORT 80
+#define SERVER_HOST IPAddress(192,168,178,32)
+#define SERVER_HOST_DEBUGNAME "192.168.178.32"
+#define SERVER_PORT 8080
+//#define SERVER_HOST "www.doogetha.com"
+//#define SERVER_HOST_DEBUGNAME "www.doogetha.com"
+//#define SERVER_PORT 80
 
 // The size of flash memory to reserve for one EPD image, must be a multiple of 4KB
 #define SIZE_EPD_SEGMENT  0x8000
 
 // is power-on and power-off attiny controlled?
-#define ATTINY_CONTROLLED_POWER
+//#define ATTINY_CONTROLLED_POWER
 // EPD TCON board connected to core?
-#define EPD_TCON_CONNECTED
-// Disable all logging and parameter requests
-#define FRIDGET_SPEED_OPTIMIZED
+//#define EPD_TCON_CONNECTED
 
 using namespace com_myfridget;
 
 /* Allocate read buffer (Note: declared in application.h) */
 char _buf[_BUF_SIZE];
 
-/* Set up remote logging */
-LLRemoteLog log(SERVER_HOST, SERVER_PORT);
 /* Set up web requester */
 LLWebRequest requester(SERVER_HOST, SERVER_PORT);
 /* The current user state */
 int userState;
 /* the current clock divisor */
 unsigned int clockDivisor;
+/* server parameter read buffer */
+char serverParamsBuf[256];
+/* server parameter map */
+LLMap serverParams(16);
 
 /* Function prototypes -------------------------------------------------------*/
 void blinkLED(int on, int off);
@@ -182,34 +182,20 @@ void loop()
     }
 }
 
-int getServerParam(const char* param, int def)
+const char* getServerParam(const char* param, const char* def)
 {
-    char readBuf[16];
-    char url[128];
-    
-#ifndef FRIDGET_SPEED_OPTIMIZED
-    log.log(String(">>> Requesting parameter ") + param);
-#endif
-    debug(String(">>> Requesting parameter ") + param);
-    
-    snprintf(url, 128, "/fridget/res/debug/%s/?param=%s", Spark.deviceID().c_str(), param);
-    if (requester.request("GET", url, NULL, readBuf, 16))
-    {
-#ifndef FRIDGET_SPEED_OPTIMIZED
-        log.log(String("<<< Received from server: ") + readBuf);
-#endif
-        debug(String("<<< Received from server: ") + readBuf);
-        int result = atoi(readBuf);
-        if (result != 0) return result;
-    }
-    // failed, return default:
-    return def;
+    const char* value = serverParams.getValue(param);
+    return value ? value : def;
 }
 
 bool establishServerConnection()
 {
+    char url[128];
+    
     int numberOfRetries = 0;
     uint8_t* ipa = WiFi.localIP().raw_address();
+    
+    snprintf(url, 128, "/fridget/res/debug/%s", Spark.deviceID().c_str());
     
     /* 
      * When using Domain Names instead of IP addresses for TCPClient,
@@ -219,7 +205,14 @@ bool establishServerConnection()
 
     while (numberOfRetries++ < 3) {
         // say hello to the server, log IP and SSID
-        if (log.log(String("*** Connected to ") + WiFi.SSID() + ", IP " + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3] + " ***")) {
+        if (requester.request(
+                "POST",
+                url,
+                (String("*** Connected to ") + WiFi.SSID() + ", IP " + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3] + " ***").c_str(),
+                serverParamsBuf,
+                256)) {
+            debug(String("<<< Received server parameters: ") + serverParamsBuf);
+            serverParams.parse(serverParamsBuf);
             return TRUE;
         } else {
             debug(String("Could not connect to ") + SERVER_HOST_DEBUGNAME + "(" + numberOfRetries + ")");
@@ -235,7 +228,7 @@ void onOnline()
     
     if (establishServerConnection()) {
         debug(String("Connected to ") + SERVER_HOST_DEBUGNAME);
-        connectMode = getServerParam("connectmode", USER_CONNECT_MODE_CLOUD_ON);
+        connectMode = atoi(getServerParam("connectmode", "1"/*USER_CONNECT_MODE_CLOUD_ON*/));
     } else {
         debug("Server not available, connecting to cloud.");
     }
@@ -243,17 +236,15 @@ void onOnline()
     if (connectMode == USER_CONNECT_MODE_CLOUD_ON)
     {
         // Connecting cloud:
-        log.log("Connecting to cloud...");
         Spark.connect();
-        log.log("Connected to cloud.");
         userState = USER_STATE_ONLINE_WITH_CLOUD;
         debug("State: USER_STATE_ONLINE_WITH_CLOUD");
         return;
     }
     
     int sleepTime = 2;//getServerParam("sleeptime", 10);
-    int connectCycle = getServerParam("connectcycle", 3);
-    
+    int connectCycle = atoi(getServerParam("connectcycle", "3"));
+
     EEPROM.write(0, (uint8_t)connectCycle);
     EEPROM.write(1, (uint8_t)0);
     EEPROM.write(2, (uint8_t)((sleepTime&0xff00)>>8));
@@ -313,6 +304,9 @@ void updateDisplayAndSleep()
     
     PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 #else
+#ifdef _SERIAL_DEBUGGING_
+    delay(200);
+#endif
     Spark.sleep(SLEEP_MODE_DEEP, sleepTime);
 #endif
 }
@@ -321,58 +315,55 @@ void flashTestImage()
 {
     char url[128];
     
-    if (getServerParam("flashimage", 0))
+    bool flash = atoi(getServerParam("flashimage", "0"));
+    
+    int index = 0;
+    bool done = FALSE;
+    snprintf(url, 128, "/fridget/res/img/%s/", Spark.deviceID().c_str());
+    if (requester.sendRequest("GET", url, NULL))
     {
-#ifndef FRIDGET_SPEED_OPTIMIZED
-        log.log("Requesting image data and writing to flash...");
-#endif
-        int index = 0;
-        bool done = FALSE;
-        snprintf(url, 128, "/fridget/res/img/%s/", Spark.deviceID().c_str());
-        if (requester.sendRequest("GET", url, NULL))
+        int overallSize = 0;
+        int badBlocks = 0;
+
+        if (requester.readHeaders())
         {
-            int overallSize = 0;
-            int badBlocks = 0;
-            
-            if (requester.readHeaders())
+            do
             {
-                do
+                int readSoFar = 0;
+                char imgLenBuf[2]; // two bytes of length
+                requester.readAll(imgLenBuf, 2);
+                int imgLen = ((int)imgLenBuf[0])<<8|imgLenBuf[1];
+                while (readSoFar < imgLen)
                 {
-                    int readSoFar = 0;
-                    char imgLenBuf[2]; // two bytes of length
-                    requester.readAll(imgLenBuf, 2);
-                    int imgLen = ((int)imgLenBuf[0])<<8|imgLenBuf[1];
-                    while (readSoFar < imgLen)
+                    int shouldRead = imgLen - readSoFar;
+                    if (shouldRead > _BUF_SIZE) shouldRead = _BUF_SIZE;
+                    debug(String("Reading image data ") + index + " [" + readSoFar + "-" + (readSoFar + shouldRead - 1) + "]");
+                    int readNow = requester.readAll(_buf, shouldRead);
+
+                    if (readNow != shouldRead)
                     {
-                        int shouldRead = imgLen - readSoFar;
-                        if (shouldRead > _BUF_SIZE) shouldRead = _BUF_SIZE;
-                        debug(String("Reading image data ") + index + " [" + readSoFar + "-" + (readSoFar + shouldRead - 1) + "]");
-                        int readNow = requester.readAll(_buf, shouldRead);
-                        if (readNow != shouldRead)
-                        {
-                            debug(String("Failed, received only ") + readNow);
-                            done = TRUE;
-                            break;
-                        }
+                        debug(String("Failed, received only ") + readNow);
+                        done = TRUE;
+                        break;
+                    }
+                    if (flash) {
                         // okay, burn it
                         debug("Writing to flash.");
                         if (!LLFlashUtil::flash((const uint8_t*)_buf, (index * SIZE_EPD_SEGMENT) + readSoFar, readNow)) {
                             badBlocks++;
                         }
                         debug("Done.");
-                        readSoFar += readNow;
                     }
-                    overallSize += readSoFar;
-                    index++;
-                } while (!done);
-            }
-            requester.stop();
-#ifndef FRIDGET_SPEED_OPTIMIZED
-            log.log(String("Wrote ") + overallSize + " bytes to flash.");
-            if (badBlocks > 0) {
-                log.log(String("XXX BAD FLASH BLOCKS: ") + badBlocks);
-            }
-#endif
+                    readSoFar += readNow;
+                }
+                overallSize += readSoFar;
+                index++;
+            } while (!done);
+        }
+        requester.stop();
+        debug(String("Wrote ") + overallSize + " bytes to flash.");
+        if (badBlocks > 0) {
+            debug(String("XXX BAD FLASH BLOCKS: ") + badBlocks);
         }
     }
 }
