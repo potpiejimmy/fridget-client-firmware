@@ -47,20 +47,20 @@
 #define USER_CONNECT_MODE_CLOUD_ON   1
 #define USER_CONNECT_MODE_CLOUD_OFF  2
 
-#define SERVER_HOST IPAddress(192,168,178,32)
-#define SERVER_HOST_DEBUGNAME "192.168.178.32"
-#define SERVER_PORT 8080
-//#define SERVER_HOST "www.doogetha.com"
-//#define SERVER_HOST_DEBUGNAME "www.doogetha.com"
-//#define SERVER_PORT 80
+//#define SERVER_HOST IPAddress(192,168,178,32)
+//#define SERVER_HOST_DEBUGNAME "192.168.178.32"
+//#define SERVER_PORT 8080
+#define SERVER_HOST "www.doogetha.com"
+#define SERVER_HOST_DEBUGNAME "www.doogetha.com"
+#define SERVER_PORT 80
 
 // The size of flash memory to reserve for one EPD image, must be a multiple of 4KB
 #define SIZE_EPD_SEGMENT  0x8000
 
 // is power-on and power-off attiny controlled?
-//#define ATTINY_CONTROLLED_POWER
+#define ATTINY_CONTROLLED_POWER
 // EPD TCON board connected to core?
-//#define EPD_TCON_CONNECTED
+#define EPD_TCON_CONNECTED
 
 using namespace com_myfridget;
 
@@ -83,8 +83,10 @@ void blinkLED(int on, int off);
 void debug(const char* msg);
 void debug(const String msg);
 void onOnline();
+void executeOp();
+void enterPowerSaveMode();
 void updateDisplay();
-void updateDisplayAndSleep();
+void powerDown(uint8_t interval);
 void flashTestImage();
 
 /* ############################################################# */
@@ -105,7 +107,10 @@ void setup()
     pinMode(D7, OUTPUT);
     
     /* Active D4 for Attiny notification output */
-    pinMode(D4, OUTPUT);
+    pinMode(D0, OUTPUT); // Time Interval Bit 0
+    pinMode(D1, OUTPUT); // Time Interval Bit 1
+    pinMode(D2, OUTPUT); // Time Interval Bit 2
+    pinMode(D4, OUTPUT); // Notification BUSY output
     digitalWrite(D4, HIGH);
 
 #ifdef _SERIAL_DEBUGGING_
@@ -118,8 +123,8 @@ void setup()
 /* This function loops forever --------------------------------------------*/
 void loop()
 {
-    uint8_t cycleLen;
-    uint8_t cycleNo;
+    uint8_t execLen;
+    uint8_t execNo;
     
     switch (userState)
     {
@@ -132,17 +137,17 @@ void loop()
         }
 #endif
         debug("Core up.");
-        cycleLen = EEPROM.read(0);
-        cycleNo = EEPROM.read(1);
-        debug(String("CycleLen=")+cycleLen+", CycleNo="+cycleNo);
-        if (cycleNo >= cycleLen) {
+        execLen = EEPROM.read(0);
+        execNo = EEPROM.read(1);
+        debug(String("ExecLen=")+execLen+", ExecNo="+execNo);
+        if (execNo >= execLen) {
             // connect to WiFi:
             WiFi.connect();
             userState = USER_STATE_CONNECTING;
             debug("State: USER_STATE_CONNECTING");
         } else {
-            // just update display and sleep:
-            updateDisplayAndSleep();
+            // execute next program step:
+            executeOp();
         }
         break;
 
@@ -165,10 +170,10 @@ void loop()
         break;
         
     case USER_STATE_ONLINE:
-        // flash the test image
+        // flash the image data
         flashTestImage();
-        // perform display update and sleep
-        updateDisplayAndSleep();
+        // execute next program step:
+        executeOp();
         break;
         
     case USER_STATE_ONLINE_WITH_CLOUD:
@@ -242,32 +247,41 @@ void onOnline()
         return;
     }
     
-    int sleepTime = 2;//getServerParam("sleeptime", 10);
-    int connectCycle = atoi(getServerParam("connectcycle", "3"));
-
-    EEPROM.write(0, (uint8_t)connectCycle);
-    EEPROM.write(1, (uint8_t)0);
-    EEPROM.write(2, (uint8_t)((sleepTime&0xff00)>>8));
-    EEPROM.write(3, (uint8_t)((sleepTime&0xff)));
+    const char* program = getServerParam("exec", "N0");
+    uint8_t programSize = strlen(program);
+    debug(String("Received program: ") + program);
+ 
+    EEPROM.write(0, (uint8_t)programSize);
+    EEPROM.write(1, (uint8_t)0); // program counter
+    EEPROM.write(2, (uint8_t)0); // reset image no.
+    for (int i=0; i<programSize; i++) EEPROM.write(3+i, program[i]);
 }
 
-void updateDisplay()
+void executeOp()
 {
-    const int decodeBufSize = 1024;
-    unsigned char decodeBuf[decodeBufSize];
+    enterPowerSaveMode();
     
-    // Now link from FLASH to DECODEBUF to HUFFMAN-INFLATE to RLE-INFLATE
-    LLFlashInputStream flashIn(EEPROM.read(1) * SIZE_EPD_SEGMENT); // XXX
-    LLBufferedBitInputStream bufIn(&flashIn, decodeBuf, decodeBufSize);
-    LLInflateInputStream inflateIn(&bufIn);
-    LLRLEInputStream rleIn(&inflateIn);
+    uint8_t execNo = EEPROM.read(1); // program counter
+    char opName = EEPROM.read(3+execNo);
+    debug(String("Execute OP ") + opName);
     
-#ifdef EPD_TCON_CONNECTED
-    ShowImage(&rleIn);
-#endif
+    // for now, only 'D' (display update) or 'N' (NOOP) allowed
+    if (opName == 'D') updateDisplay();
+    
+    execNo++;
+    
+    // OP done, now powering down:
+    uint8_t interval = EEPROM.read(3+execNo) - '0';
+    debug(String("Execute Sleep interval ") + interval);
+    execNo++;
+    
+    debug(String("Increasing execNo to ") + execNo);
+    EEPROM.write(1, execNo);
+    
+    powerDown(interval);
 }
 
-void updateDisplayAndSleep()
+void enterPowerSaveMode()
 {
     debug("Disabling WiFi and LED");
     // WiFi und RGB aus
@@ -283,31 +297,53 @@ void updateDisplayAndSleep()
     RCC_HCLKConfig(RCC_SYSCLK_Div8);
     clockDivisor=8;
 #endif
+}
+
+void updateDisplay()
+{
+    const int decodeBufSize = 1024;
+    unsigned char decodeBuf[decodeBufSize];
     
-    uint8_t cycle = EEPROM.read(1) + 1;
-    int sleepTime = ((int)EEPROM.read(2))<<8 | EEPROM.read(3);
- 
+    uint8_t imageNo = EEPROM.read(2);
+    
     // write the image from flash to the display:
-    debug("Updating display");
-    updateDisplay();
+    debug(String("Updating display with image no. ") + imageNo);
     
+    // Now link from FLASH to DECODEBUF to HUFFMAN-INFLATE to RLE-INFLATE
+    LLFlashInputStream flashIn(imageNo * SIZE_EPD_SEGMENT); // XXX
+    LLBufferedBitInputStream bufIn(&flashIn, decodeBuf, decodeBufSize);
+    LLInflateInputStream inflateIn(&bufIn);
+    LLRLEInputStream rleIn(&inflateIn);
+    
+#ifdef EPD_TCON_CONNECTED
+    ShowImage(&rleIn);
+#endif
+    
+    EEPROM.write(2, ++imageNo);
+}
+
+void powerDown(uint8_t interval)
+{
     // deep-sleep for sleepTime seconds
-    debug(String("Going to sleep for ") + sleepTime + " sec.");
-    
-    debug(String("Increased cycle no. to ") + cycle);
-    EEPROM.write(1, cycle);
+    debug(String("Going to sleep with sleep interval #") + interval);
     
 #ifdef ATTINY_CONTROLLED_POWER
-    digitalWrite(D4, LOW);    // Notify Attiny
     userState = USER_STATE_IDLE;
     debug("State: USER_STATE_IDLE");
+    
+    digitalWrite(D0, (interval&1));
+    digitalWrite(D1, (interval&2)>>1);
+    digitalWrite(D2, (interval&4)>>2);
+    digitalWrite(D4, LOW);    // Notify Attiny
+    
+    delay(100);
     
     PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 #else
 #ifdef _SERIAL_DEBUGGING_
     delay(200);
 #endif
-    Spark.sleep(SLEEP_MODE_DEEP, sleepTime);
+    Spark.sleep(SLEEP_MODE_DEEP, 1+interval);
 #endif
 }
 

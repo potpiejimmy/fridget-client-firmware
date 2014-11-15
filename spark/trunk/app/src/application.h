@@ -47,7 +47,7 @@
 
 // SERIAL DEBUGGING - if you enable this, you must connect via 9600 8N1 terminal
 // and hit any key so that the core can start up
-#define _SERIAL_DEBUGGING_
+//#define _SERIAL_DEBUGGING_
 
 #define _BUF_SIZE 0x1000
 
