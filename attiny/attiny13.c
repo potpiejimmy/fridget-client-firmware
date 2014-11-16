@@ -33,6 +33,31 @@ void sleep_now() {
 	wdt_disable();
 }
 
+void SleepSeconds(uint16_t seconds)
+{
+	uint16_t cycles = seconds / 8;
+	for (int i=0 ; i<cycles; i++)
+	{
+		wdt_init(WDTO_8S);
+		sleep_now();
+	}
+}
+
+uint16_t GetSleepTimeFromSpark()
+{
+	// get sleep duration code from Spark
+	// D1  D0  Spark
+	// PB4 PB3 Attiny
+	// 0   0   = 1h
+	// 0   1   = 1h-3min
+	// 1   0   = 1h+3min
+	// 1   1   = 8s
+	if (PINB & (1 << PINB3) && PINB & (1 << PINB4)) return 8;
+	if (PINB & (1 << PINB3)) return (3600-180);
+	if (PINB & (1 << PINB4)) return (3600+180);
+	return 3600;
+}
+
 
 int main(void)
 {
@@ -59,21 +84,20 @@ int main(void)
 		PORTB = 0b00000001;
 		// give Spark three seonds to start and wait for PinB1 which is the busy pin of the spark
 		// we also wait for PinB2 which is the busy pin of the spectra display
-		_delay_ms(3000);
+		_delay_ms(1500);
 		while (PINB & (1 << PINB1) || PINB & (1 << PINB2))
 		{
 			wdt_init(WDTO_250MS);
 			sleep_now();
 		}
+		
+		uint16_t timeToSleep = GetSleepTimeFromSpark();		
+		
 		// now spark and display is ready...turn off power...
 		PORTB = 0b00000000;  // disable LDO power
-
+	
 		// and wait long time till next spark action...
-		for (int i=0 ; i<2; i++)
-		{
-			wdt_init(WDTO_8S);
-			sleep_now();
-		}
+		SleepSeconds(timeToSleep);
     }
 }
 
