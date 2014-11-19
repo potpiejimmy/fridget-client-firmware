@@ -4,7 +4,9 @@
  * Created: 08.11.2014 18:44:30
  *  Author: Wolf
  */ 
-#define F_CPU 1250000UL
+
+// default is clock select 9.6Mhz for Attiny13 and Clock divider 8 = 1.2 Mhz
+#define F_CPU 1200000UL
 
 #include <util/delay.h>
 #include <avr/io.h>
@@ -17,7 +19,7 @@ void wdt_init(uint8_t timeout) {
 	cli();
 	wdt_enable(timeout);
 	//MCUSR |= (1<<WDRF);
-	WDTCR |= (1<<WDE) | (1<<WDTIE);   // Enable watchdog
+	WDTCR |= /*(1<<WDE) | */(1<<WDTIE);   // Enable watchdog
 	wdt_reset();
 	//WDTCR = (1<<WDTIE) | WDTO_8S;    // Watchdog interrupt instead of reset with 4s timeout
 	sei();
@@ -35,6 +37,14 @@ void sleep_now() {
 
 void SleepSeconds(uint16_t seconds)
 {
+	//granularity 8s
+	//
+	// some more information: stopping the time showed that sleep time of 256s takes ~5s longer
+	// the reason might be the time for waking up and sleeping again in this for-loop
+	// every 8 seconds.
+	// this might contribute to some little unwanted current consumption
+	// the current consumption is low, so not really significant, but it might be a possible 
+	// optimization. For this the current consumption should be measured that occurs every 8 seconds.
 	uint16_t cycles = seconds / 8;
 	for (int i=0 ; i<cycles; i++)
 	{
@@ -53,9 +63,9 @@ uint16_t GetSleepTimeFromSpark()
 	// 1   0   = 1h+3min
 	// 1   1   = 8s
 	if (PINB & (1 << PINB3) && PINB & (1 << PINB4)) return 8;
-	if (PINB & (1 << PINB3)) return (3600-180);
-	if (PINB & (1 << PINB4)) return (3600+180);
-	return 3600;
+	if (PINB & (1 << PINB3)) return (64-8)/*(3600-180)*/;
+	if (PINB & (1 << PINB4)) return (64+8)/*(3600+180)*/;
+	return 256/*3600*/;
 }
 
 
