@@ -89,7 +89,7 @@ namespace com_myfridget
         // that spark clock is 8Mhz and that TCon module
         // of spectra display works up to 500Khz, so I set to 16, 
         // saying that TCon is operated at 500Khz (upper limit)
-        SPI.setClockDivider(SPI_CLOCK_DIV2) ;
+        SPI.setClockDivider(_clockDivisor == 1 ? SPI_CLOCK_DIV16 : SPI_CLOCK_DIV2) ;
         // setting bit order to MSBFirst according the TCon module spec
         SPI.setBitOrder(MSBFIRST);
         // according to TCon Spec CPOL = 0 (CLK is low when not sending data) and CPHA = 0 (Bit wird bei positiver Flanke ausgelesen) which corresponds to mode 1

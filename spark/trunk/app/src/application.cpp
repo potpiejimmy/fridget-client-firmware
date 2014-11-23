@@ -35,6 +35,11 @@
 #include "LLInflateInputStream.h"
 #include "LLRLEInputStream.h"
 
+// is power-on and power-off attiny controlled?
+#define ATTINY_CONTROLLED_POWER
+// EPD TCON board connected to core?
+#define EPD_TCON_CONNECTED
+
 // user states
 #define USER_STATE_OFFLINE                0
 #define USER_STATE_CONNECTING             1
@@ -57,10 +62,11 @@
 // The size of flash memory to reserve for one EPD image, must be a multiple of 4KB
 #define SIZE_EPD_SEGMENT  0x8000
 
-// is power-on and power-off attiny controlled?
-#define ATTINY_CONTROLLED_POWER
-// EPD TCON board connected to core?
-#define EPD_TCON_CONNECTED
+/* EEPROM entries */
+#define EEPROM_ENTRY_PROGRAM_LENGTH  0
+#define EEPROM_ENTRY_PROGRAM_COUNTER 1
+#define EEPROM_ENTRY_RESERVED        2
+#define EEPROM_ENTRY_PROGRAM_START   3
 
 using namespace com_myfridget;
 
@@ -72,7 +78,7 @@ LLWebRequest requester(SERVER_HOST, SERVER_PORT);
 /* The current user state */
 int userState;
 /* the current clock divisor */
-unsigned int clockDivisor;
+unsigned int _clockDivisor;
 /* server parameter read buffer */
 char serverParamsBuf[256];
 /* server parameter map */
@@ -85,9 +91,9 @@ void debug(const String msg);
 void onOnline();
 void executeOp();
 void enterPowerSaveMode();
-void updateDisplay();
+void updateDisplay(uint8_t imgNo);
 void powerDown(uint8_t interval);
-void flashTestImage();
+void flashImages();
 
 /* ############################################################# */
 
@@ -98,7 +104,7 @@ SYSTEM_MODE(MANUAL);
 /* This function is called once at start up ----------------------------------*/
 void setup()
 {
-    clockDivisor = 1;
+    _clockDivisor = 1;
     
     /* start offline */
     userState = USER_STATE_OFFLINE;
@@ -137,14 +143,17 @@ void loop()
         }
 #endif
         debug("Core up.");
-        execLen = EEPROM.read(0);
-        execNo = EEPROM.read(1);
+        execLen = EEPROM.read(EEPROM_ENTRY_PROGRAM_LENGTH);
+        execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER);
         debug(String("ExecLen=")+execLen+", ExecNo="+execNo);
         if (execNo >= execLen) {
             // connect to WiFi:
             WiFi.connect();
             userState = USER_STATE_CONNECTING;
             debug("State: USER_STATE_CONNECTING");
+            if (!WiFi.hasCredentials()) {
+                updateDisplay(1); // show setup image
+            }
         } else {
             // execute next program step:
             executeOp();
@@ -153,7 +162,6 @@ void loop()
 
     case USER_STATE_CONNECTING:
         // do nothing while connecting, wait for ready
-        //blinkLED(128,128);
         if (WiFi.ready()) {
             userState = USER_STATE_CONNECTED_AWAITING_IP;
             debug("State: USER_STATE_CONNECTED_AWAITING_IP");
@@ -171,7 +179,7 @@ void loop()
         
     case USER_STATE_ONLINE:
         // flash the image data
-        flashTestImage();
+        flashImages();
         // execute next program step:
         executeOp();
         break;
@@ -251,32 +259,32 @@ void onOnline()
     uint8_t programSize = strlen(program);
     debug(String("Received program: ") + program);
  
-    EEPROM.write(0, (uint8_t)programSize);
-    EEPROM.write(1, (uint8_t)0); // program counter
-    EEPROM.write(2, (uint8_t)0); // reset image no.
-    for (int i=0; i<programSize; i++) EEPROM.write(3+i, program[i]);
+    EEPROM.write(EEPROM_ENTRY_PROGRAM_LENGTH, (uint8_t)programSize);
+    EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, (uint8_t)0); // program counter
+    //EEPROM.write(EEPROM_ENTRY_RESERVED, (uint8_t)0); // reset image no.
+    for (int i=0; i<programSize; i++) EEPROM.write(EEPROM_ENTRY_PROGRAM_START+i, program[i]);
 }
 
 void executeOp()
 {
     enterPowerSaveMode();
     
-    uint8_t execNo = EEPROM.read(1); // program counter
-    char opName = EEPROM.read(3+execNo);
+    uint8_t execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER); // program counter
+    char opName = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo);
     debug(String("Execute OP ") + opName);
     
-    // for now, only 'D' (display update) or 'N' (NOOP) allowed
-    if (opName == 'D') updateDisplay();
+    // for now, only '-' (NOOP) or 'A-Z' (IMG UDPATE) allowed)
+    if (opName >= 'A') updateDisplay(opName - 'A');
     
     execNo++;
     
     // OP done, now powering down:
-    uint8_t interval = EEPROM.read(3+execNo) - '0';
+    uint8_t interval = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo) - '0';
     debug(String("Execute Sleep interval ") + interval);
     execNo++;
     
     debug(String("Increasing execNo to ") + execNo);
-    EEPROM.write(1, execNo);
+    EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, execNo);
     
     powerDown(interval);
 }
@@ -295,22 +303,20 @@ void enterPowerSaveMode()
     // runtertakten:
 #ifdef EPD_TCON_CONNECTED
     RCC_HCLKConfig(RCC_SYSCLK_Div8);
-    clockDivisor=8;
+    _clockDivisor=8;
 #endif
 }
 
-void updateDisplay()
+void updateDisplay(uint8_t imgNo)
 {
     const int decodeBufSize = 1024;
     unsigned char decodeBuf[decodeBufSize];
     
-    uint8_t imageNo = EEPROM.read(2);
-    
     // write the image from flash to the display:
-    debug(String("Updating display with image no. ") + imageNo);
+    debug(String("Updating display with image no. ") + imgNo);
     
     // Now link from FLASH to DECODEBUF to HUFFMAN-INFLATE to RLE-INFLATE
-    LLFlashInputStream flashIn(imageNo * SIZE_EPD_SEGMENT); // XXX
+    LLFlashInputStream flashIn(imgNo * SIZE_EPD_SEGMENT);
     LLBufferedBitInputStream bufIn(&flashIn, decodeBuf, decodeBufSize);
     LLInflateInputStream inflateIn(&bufIn);
     LLRLEInputStream rleIn(&inflateIn);
@@ -318,8 +324,6 @@ void updateDisplay()
 #ifdef EPD_TCON_CONNECTED
     ShowImage(&rleIn);
 #endif
-    
-    EEPROM.write(2, ++imageNo);
 }
 
 void powerDown(uint8_t interval)
@@ -347,13 +351,10 @@ void powerDown(uint8_t interval)
 #endif
 }
 
-void flashTestImage()
+void flashImages()
 {
     char url[128];
     
-    bool flash = atoi(getServerParam("flashimage", "0"));
-    
-    int index = 0;
     bool done = FALSE;
     snprintf(url, 128, "/fridget/res/img/%s/", Spark.deviceID().c_str());
     if (requester.sendRequest("GET", url, NULL))
@@ -365,10 +366,18 @@ void flashTestImage()
         {
             do
             {
-                int readSoFar = 0;
-                char imgLenBuf[2]; // two bytes of length
-                requester.readAll(imgLenBuf, 2);
+                // one byte image index:
+                uint8_t index = 0;
+                int valread = requester.readAll((char*)&index, 1);
+                if (!valread) { done = TRUE; break; }
+                
+                // two bytes of length
+                char imgLenBuf[2];
+                valread = requester.readAll(imgLenBuf, 2);
                 int imgLen = ((int)imgLenBuf[0])<<8|imgLenBuf[1];
+                if (!valread) { done = TRUE; break; }
+                
+                int readSoFar = 0;
                 while (readSoFar < imgLen)
                 {
                     int shouldRead = imgLen - readSoFar;
@@ -382,18 +391,15 @@ void flashTestImage()
                         done = TRUE;
                         break;
                     }
-                    if (flash) {
-                        // okay, burn it
-                        debug("Writing to flash.");
-                        if (!LLFlashUtil::flash((const uint8_t*)_buf, (index * SIZE_EPD_SEGMENT) + readSoFar, readNow)) {
-                            badBlocks++;
-                        }
-                        debug("Done.");
+                    // okay, burn it
+                    debug("Writing to flash.");
+                    if (!LLFlashUtil::flash((const uint8_t*)_buf, (index * SIZE_EPD_SEGMENT) + readSoFar, readNow)) {
+                        badBlocks++;
                     }
+                    debug("Done.");
                     readSoFar += readNow;
                 }
                 overallSize += readSoFar;
-                index++;
             } while (!done);
         }
         requester.stop();
@@ -432,5 +438,5 @@ void debug(const String msg)
 
 void delayRealMicros(unsigned long us)
 {
-    delayMicroseconds(us / clockDivisor + (us % clockDivisor > 0 ? 1 : 0));
+    delayMicroseconds(us / _clockDivisor + (us % _clockDivisor > 0 ? 1 : 0));
 }

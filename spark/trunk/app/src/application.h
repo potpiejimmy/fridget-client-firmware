@@ -53,6 +53,8 @@
 
 /* Read buffer */
 extern char _buf[_BUF_SIZE];
+/* the current clock divisor */
+extern unsigned int _clockDivisor;
 
 // The size of an EPD image
 #define SIZE_EPD_IMAGE     30000
