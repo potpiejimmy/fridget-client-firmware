@@ -84,10 +84,15 @@ char serverParamsBuf[256];
 /* server parameter map */
 LLMap serverParams(16);
 
+/* Debugging -----------------------------------------------*/
+#ifdef _SERIAL_DEBUGGING_
+#define _DEBUG(msg) Serial.println(msg)
+#else
+#define _DEBUG(msg)
+#endif
+
 /* Function prototypes -------------------------------------------------------*/
 void blinkLED(int on, int off);
-void debug(const char* msg);
-void debug(const String msg);
 void onOnline();
 void executeOp();
 void enterPowerSaveMode();
@@ -142,15 +147,15 @@ void loop()
             return; // do nothing, wait for key press
         }
 #endif
-        debug("Core up.");
+        _DEBUG("Core up.");
         execLen = EEPROM.read(EEPROM_ENTRY_PROGRAM_LENGTH);
         execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER);
-        debug(String("ExecLen=")+execLen+", ExecNo="+execNo);
+        _DEBUG(String("ExecLen=")+execLen+", ExecNo="+execNo);
         if (execNo >= execLen) {
             // connect to WiFi:
             WiFi.connect();
             userState = USER_STATE_CONNECTING;
-            debug("State: USER_STATE_CONNECTING");
+            _DEBUG("State: USER_STATE_CONNECTING");
             if (!WiFi.hasCredentials()) {
                 updateDisplay(1); // show setup image
             }
@@ -164,7 +169,7 @@ void loop()
         // do nothing while connecting, wait for ready
         if (WiFi.ready()) {
             userState = USER_STATE_CONNECTED_AWAITING_IP;
-            debug("State: USER_STATE_CONNECTED_AWAITING_IP");
+            _DEBUG("State: USER_STATE_CONNECTED_AWAITING_IP");
         }
         break;
     
@@ -172,7 +177,7 @@ void loop()
         // wait until IP address is set
         if (WiFi.localIP().raw_address()[0]) {
             userState = USER_STATE_ONLINE;
-            debug("State: USER_STATE_ONLINE");
+            _DEBUG("State: USER_STATE_ONLINE");
             onOnline();
         }
         break;
@@ -224,11 +229,11 @@ bool establishServerConnection()
                 (String("*** Connected to ") + WiFi.SSID() + ", IP " + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3] + " ***").c_str(),
                 serverParamsBuf,
                 256)) {
-            debug(String("<<< Received server parameters: ") + serverParamsBuf);
+            _DEBUG(String("<<< Received server parameters: ") + serverParamsBuf);
             serverParams.parse(serverParamsBuf);
             return TRUE;
         } else {
-            debug(String("Could not connect to ") + SERVER_HOST_DEBUGNAME + "(" + numberOfRetries + ")");
+            _DEBUG(String("Could not connect to ") + SERVER_HOST_DEBUGNAME + "(" + numberOfRetries + ")");
         }
         delayRealMicros(100000);
     }
@@ -240,10 +245,10 @@ void onOnline()
     int connectMode = USER_CONNECT_MODE_CLOUD_ON;
     
     if (establishServerConnection()) {
-        debug(String("Connected to ") + SERVER_HOST_DEBUGNAME);
+        _DEBUG(String("Connected to ") + SERVER_HOST_DEBUGNAME);
         connectMode = atoi(getServerParam("connectmode", "1"/*USER_CONNECT_MODE_CLOUD_ON*/));
     } else {
-        debug("Server not available, connecting to cloud.");
+        _DEBUG("Server not available, connecting to cloud.");
     }
     
     if (connectMode == USER_CONNECT_MODE_CLOUD_ON)
@@ -251,13 +256,13 @@ void onOnline()
         // Connecting cloud:
         Spark.connect();
         userState = USER_STATE_ONLINE_WITH_CLOUD;
-        debug("State: USER_STATE_ONLINE_WITH_CLOUD");
+        _DEBUG("State: USER_STATE_ONLINE_WITH_CLOUD");
         return;
     }
     
     const char* program = getServerParam("exec", "N0");
     uint8_t programSize = strlen(program);
-    debug(String("Received program: ") + program);
+    _DEBUG(String("Received program: ") + program);
  
     EEPROM.write(EEPROM_ENTRY_PROGRAM_LENGTH, (uint8_t)programSize);
     EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, (uint8_t)0); // program counter
@@ -271,7 +276,7 @@ void executeOp()
     
     uint8_t execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER); // program counter
     char opName = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo);
-    debug(String("Execute OP ") + opName);
+    _DEBUG(String("Execute OP ") + opName);
     
     // for now, only '-' (NOOP) or 'A-Z' (IMG UDPATE) allowed)
     if (opName >= 'A') updateDisplay(opName - 'A');
@@ -280,10 +285,10 @@ void executeOp()
     
     // OP done, now powering down:
     uint8_t interval = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo) - '0';
-    debug(String("Execute Sleep interval ") + interval);
+    _DEBUG(String("Execute Sleep interval ") + interval);
     execNo++;
     
-    debug(String("Increasing execNo to ") + execNo);
+    _DEBUG(String("Increasing execNo to ") + execNo);
     EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, execNo);
     
     powerDown(interval);
@@ -291,13 +296,13 @@ void executeOp()
 
 void enterPowerSaveMode()
 {
-    debug("Disabling WiFi and LED");
+    _DEBUG("Disabling WiFi and LED");
     // WiFi und RGB aus
     WiFi.off();
     RGB.control(true);
     RGB.color(0);
     
-    debug("Set IWDG maximum timeout (about 26 sec.)");
+    _DEBUG("Set IWDG maximum timeout (about 26 sec.)");
     IWDG_Reset_Enable(0xFFFF); // set IWDG timeout to a maximum value
     
     // runtertakten:
@@ -313,7 +318,7 @@ void updateDisplay(uint8_t imgNo)
     unsigned char decodeBuf[decodeBufSize];
     
     // write the image from flash to the display:
-    debug(String("Updating display with image no. ") + imgNo);
+    _DEBUG(String("Updating display with image no. ") + imgNo);
     
     // Now link from FLASH to DECODEBUF to HUFFMAN-INFLATE to RLE-INFLATE
     LLFlashInputStream flashIn(imgNo * SIZE_EPD_SEGMENT);
@@ -329,11 +334,11 @@ void updateDisplay(uint8_t imgNo)
 void powerDown(uint8_t interval)
 {
     // deep-sleep for sleepTime seconds
-    debug(String("Going to sleep with sleep interval #") + interval);
+    _DEBUG(String("Going to sleep with sleep interval #") + interval);
     
 #ifdef ATTINY_CONTROLLED_POWER
     userState = USER_STATE_IDLE;
-    debug("State: USER_STATE_IDLE");
+    _DEBUG("State: USER_STATE_IDLE");
     
     digitalWrite(D0, (interval&1));
     digitalWrite(D1, (interval&2)>>1);
@@ -382,30 +387,30 @@ void flashImages()
                 {
                     int shouldRead = imgLen - readSoFar;
                     if (shouldRead > _BUF_SIZE) shouldRead = _BUF_SIZE;
-                    debug(String("Reading image data ") + index + " [" + readSoFar + "-" + (readSoFar + shouldRead - 1) + "]");
+                    _DEBUG(String("Reading image data ") + index + " [" + readSoFar + "-" + (readSoFar + shouldRead - 1) + "]");
                     int readNow = requester.readAll(_buf, shouldRead);
 
                     if (readNow != shouldRead)
                     {
-                        debug(String("Failed, received only ") + readNow);
+                        _DEBUG(String("Failed, received only ") + readNow);
                         done = TRUE;
                         break;
                     }
                     // okay, burn it
-                    debug("Writing to flash.");
+                    _DEBUG("Writing to flash.");
                     if (!LLFlashUtil::flash((const uint8_t*)_buf, (index * SIZE_EPD_SEGMENT) + readSoFar, readNow)) {
                         badBlocks++;
                     }
-                    debug("Done.");
+                    _DEBUG("Done.");
                     readSoFar += readNow;
                 }
                 overallSize += readSoFar;
             } while (!done);
         }
         requester.stop();
-        debug(String("Wrote ") + overallSize + " bytes to flash.");
+        _DEBUG(String("Wrote ") + overallSize + " bytes to flash.");
         if (badBlocks > 0) {
-            debug(String("XXX BAD FLASH BLOCKS: ") + badBlocks);
+            _DEBUG(String("XXX BAD FLASH BLOCKS: ") + badBlocks);
         }
     }
 }
@@ -420,20 +425,6 @@ void blinkLED(int on, int off)
     digitalWrite(D7, LOW);    // Turn OFF the LED pins
 #endif
     delayRealMicros(off*1000);
-}
-
-void debug(const char* msg)
-{
-#ifdef _SERIAL_DEBUGGING_
-    Serial.println(msg);
-#endif
-}
-
-void debug(const String msg)
-{
-#ifdef _SERIAL_DEBUGGING_
-    Serial.println(msg);
-#endif
 }
 
 void delayRealMicros(unsigned long us)
