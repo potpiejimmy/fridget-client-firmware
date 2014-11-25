@@ -157,6 +157,9 @@ void loop()
             userState = USER_STATE_CONNECTING;
             _DEBUG("State: USER_STATE_CONNECTING");
             if (!WiFi.hasCredentials()) {
+                // Note: if no credentials are available, the loop function
+                // won't be called until smart config process completed, so
+                // we have to update the display now:
                 updateDisplay(1); // show setup image
             }
         } else {
