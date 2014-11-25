@@ -58,9 +58,9 @@ uint16_t GetSleepTimeFromSpark()
 	// get sleep duration code from Spark
 	// D1  D0  Spark
 	// PB4 PB3 Attiny
-	// 0   0   = 1h
+	// 0   0   = 256s
 	// 0   1   = 1h-3min
-	// 1   0   = 1h+3min
+	// 1   0   = 1hmin
 	// 1   1   = 8s
 	if (PINB & (1 << PINB3) && PINB & (1 << PINB4)) return 8;
 	if (PINB & (1 << PINB3)) return (3600-180);
