@@ -35,9 +35,20 @@ void sleep_now() {
 	wdt_disable();
 }
 
-void SleepSeconds(uint16_t seconds)
+void SleepLong(uint16_t time)
 {
-	//granularity 8s
+	// time is encoded in the following way:
+	// 0-59 corresponds to sleep time in seconds
+	// if time is >59 it corresponds to sleep time in minutes
+	// e.g. 
+	// 58 = 58s
+	// 59 = 59s
+	// 60 = 1min
+	// 61 = 2min
+	// 62 = 3min
+	// and so on
+	//
+	// granularity is 8s (watchdog sleep time). time values less then 9s will result in no sleep time at all
 	//
 	// some more information: stopping the time showed that sleep time of 256s takes ~5s longer
 	// the reason might be the time for waking up and sleeping again in this for-loop
@@ -45,8 +56,18 @@ void SleepSeconds(uint16_t seconds)
 	// this might contribute to some little unwanted current consumption
 	// the current consumption is low, so not really significant, but it might be a possible 
 	// optimization. For this the current consumption should be measured that occurs every 8 seconds.
-	uint16_t cycles = seconds / 8;
-	for (int i=0 ; i<cycles; i++)
+
+	uint16_t seconds = time;
+	if (time>59)
+	{
+		seconds = (time-59)*60; // will overflow if time is greater than 2^16/60+59
+	}
+	//
+	// time drift measurements with prototype A showed that actual time is 8.408 seconds for one sleep loop.
+	// so we do divide by 8.408 here, not by 8.
+		
+	uint16_t cycles = seconds / 8.408;
+	for (uint16_t i=0 ; i<cycles; i++)
 	{
 		wdt_init(WDTO_8S);
 		sleep_now();
@@ -62,15 +83,15 @@ uint16_t GetSleepTimeFromSpark()
 	// read exactly 16 bit (2 bytes) from spark, MSB first
 	for (int i=0;i<16;i++)
 	{
-		// if PB3 = high then set last bit to 1 by increasing
-		if (PINB & (1 << PINB3)) retval++;
 		// shift left by one position
 		retval <<= 1;
+		// if PB3 = high then set last bit to 1 by increasing
+		if (PINB & (1 << PINB3)) retval++;
 		// now toggle CLK signal with XOR
 		PORTB ^= (1<<PINB4);
-		// we do not know delay, assuming 1ms is sufficient
+		// we do not know delay, assuming 10ms is sufficient
 		// for spark to detect CLK toggle and set D1
-		_delay_ms(1);
+		_delay_ms(10);
 	}
 
 	return retval;
@@ -116,7 +137,7 @@ int main(void)
 		PORTB = 0b00000000;  // disable LDO power
 	
 		// and wait long time till next spark action...
-		SleepSeconds(timeToSleep);
+		SleepLong(timeToSleep);
     }
 }
 
