@@ -55,24 +55,33 @@ void SleepSeconds(uint16_t seconds)
 
 uint16_t GetSleepTimeFromSpark()
 {
-	// get sleep duration code from Spark
-	// D1  D0  Spark
-	// PB4 PB3 Attiny
-	// 0   0   = 256s
-	// 0   1   = 1h-3min
-	// 1   0   = 1h
-	// 1   1   = 8s
-	if (PINB & (1 << PINB3) && PINB & (1 << PINB4)) return 8;
-	if (PINB & (1 << PINB3)) return (3600-180);
-	if (PINB & (1 << PINB4)) return 3600;
-	return 256/*3600*/;
+	// use PB4 (Attiny) connected to D1 of Spark as CLK (Attiny output)
+	// use PB3 (Attiny) connected to D0 of Spark as Data (Attiny input)
+	
+	uint16_t retval = 0b0000000000000000;
+	// read exactly 16 bit (2 bytes) from spark, MSB first
+	for (int i=0;i<16;i++)
+	{
+		// if PB3 = high then set last bit to 1 by increasing
+		if (PINB & (1 << PINB3)) retval++;
+		// shift left by one position
+		retval <<= 1;
+		// now toggle CLK signal with XOR
+		PORTB ^= (1<<PINB4);
+		// we do not know delay, assuming 1ms is sufficient
+		// for spark to detect CLK toggle and set D1
+		_delay_ms(1);
+	}
+
+	return retval;
 }
 
 
 int main(void)
 {
 	// define the port usage (PINB0 is output. Rest is input)
-	DDRB=0b00000001;
+	// define port PB4 as CLK output for serial communication with Spark
+	DDRB=0b00010001;
 	//MCUCR=0b00010000;
 
 	//PCMSK = (1<<PCINT1);	// pin change mask: listen to portb bit 2
