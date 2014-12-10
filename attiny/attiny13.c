@@ -35,38 +35,13 @@ void sleep_now() {
 	wdt_disable();
 }
 
-void SleepLong(uint16_t time)
+void SleepLong(uint16_t cycles)
 {
-	// time is encoded in the following way:
-	// 0-59 corresponds to sleep time in seconds
-	// if time is >59 it corresponds to sleep time in minutes
-	// e.g. 
-	// 58 = 58s
-	// 59 = 59s
-	// 60 = 1min
-	// 61 = 2min
-	// 62 = 3min
-	// and so on
-	//
-	// granularity is 8s (watchdog sleep time). time values less then 9s will result in no sleep time at all
-	//
-	// some more information: stopping the time showed that sleep time of 256s takes ~5s longer
-	// the reason might be the time for waking up and sleeping again in this for-loop
-	// every 8 seconds.
-	// this might contribute to some little unwanted current consumption
-	// the current consumption is low, so not really significant, but it might be a possible 
-	// optimization. For this the current consumption should be measured that occurs every 8 seconds.
-
-	uint16_t seconds = time;
-	if (time>59)
-	{
-		seconds = (time-59)*60; // will overflow if time is greater than 2^16/60+59
-	}
-	//
-	// time drift measurements with prototype A showed that actual time is 8.408 seconds for one sleep loop.
-	// so we do divide by 8.408 here, not by 8.
-		
-	uint16_t cycles = seconds / 8.408;
+	// sleep the number of given cycles
+	// long-time tests showed that one sleep takes approx. 8.408 seconds
+	// we do not know if the difference to exactly 8 seconds is caused
+	// by inexactness of watchdog oscillator and/or by time needed for waking
+	// up and going to sleep again		
 	for (uint16_t i=0 ; i<cycles; i++)
 	{
 		wdt_init(WDTO_8S);
