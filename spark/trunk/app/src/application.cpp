@@ -68,6 +68,9 @@
 #define EEPROM_ENTRY_RESERVED        2
 #define EEPROM_ENTRY_PROGRAM_START   3
 
+/* WIFI connect time out (ms) */
+#define WIFI_CONNECT_TIMEOUT 30000
+
 using namespace com_myfridget;
 
 /* Allocate read buffer (Note: declared in application.h) */
@@ -83,6 +86,8 @@ unsigned int _clockDivisor;
 char serverParamsBuf[256];
 /* server parameter map */
 LLMap serverParams(16);
+/* time we switched to connecting mode */
+system_tick_t connectingStartTs;
 
 /* Debugging -----------------------------------------------*/
 #ifdef _SERIAL_DEBUGGING_
@@ -97,7 +102,7 @@ void onOnline();
 void executeOp();
 void enterPowerSaveMode();
 void updateDisplay(uint8_t imgNo);
-void powerDown(uint8_t interval);
+void powerDown(uint16_t interval);
 void flashImages();
 
 /* ############################################################# */
@@ -156,6 +161,7 @@ void loop()
             WiFi.connect();
             userState = USER_STATE_CONNECTING;
             _DEBUG("State: USER_STATE_CONNECTING");
+            connectingStartTs = millis();
             if (!WiFi.hasCredentials()) {
                 // Note: if no credentials are available, the loop function
                 // won't be called until smart config process completed, so
@@ -173,6 +179,11 @@ void loop()
         if (WiFi.ready()) {
             userState = USER_STATE_CONNECTED_AWAITING_IP;
             _DEBUG("State: USER_STATE_CONNECTED_AWAITING_IP");
+        } else if (millis() - connectingStartTs > WIFI_CONNECT_TIMEOUT) {
+            // connecting timed out
+            // XXX delete credentials and power down for 10 cycles
+            WiFi.clearCredentials();
+            powerDown(10);
         }
         break;
     
@@ -263,7 +274,7 @@ void onOnline()
         return;
     }
     
-    const char* program = getServerParam("exec", "N0");
+    const char* program = getServerParam("exec", "A0000");
     uint8_t programSize = strlen(program);
     _DEBUG(String("Received program: ") + program);
  
@@ -287,14 +298,15 @@ void executeOp()
     execNo++;
     
     // OP done, now powering down:
-    uint8_t interval = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo) - '0';
+    char interval_s[5]; interval_s[4] = 0;
+    for (int i=0; i<4; i++) interval_s[i] = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+(execNo++));
+    unsigned long interval = strtoul(interval_s, 0, 16);
     _DEBUG(String("Execute Sleep interval ") + interval);
-    execNo++;
     
     _DEBUG(String("Increasing execNo to ") + execNo);
     EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, execNo);
     
-    powerDown(interval);
+    powerDown((uint16_t)interval);
 }
 
 void enterPowerSaveMode()
@@ -334,7 +346,7 @@ void updateDisplay(uint8_t imgNo)
 #endif
 }
 
-void powerDown(uint8_t interval)
+void powerDown(uint16_t interval)
 {
     // deep-sleep for sleepTime seconds
     _DEBUG(String("Going to sleep with sleep interval #") + interval);
