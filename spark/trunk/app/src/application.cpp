@@ -122,11 +122,11 @@ void setup()
     /* Activate the LED output PIN */
     pinMode(D7, OUTPUT);
     
-    /* Active D4 for Attiny notification output */
-    pinMode(D0, OUTPUT); // Time Interval Bit 0
-    pinMode(D1, OUTPUT); // Time Interval Bit 1
-    pinMode(D2, OUTPUT); // Time Interval Bit 2
-    pinMode(D4, OUTPUT); // Notification BUSY output
+    /* Attiny PINs: */
+    pinMode(D0, OUTPUT); // Time Interval Bit DATA
+    pinMode(D1, INPUT); // Time Interval Bit CLK (IN)
+    pinMode(D4, OUTPUT); // Notification output BUSY
+    /* Activate D4 for Attiny notification busy output */
     digitalWrite(D4, HIGH);
 
 #ifdef _SERIAL_DEBUGGING_
@@ -348,26 +348,32 @@ void updateDisplay(uint8_t imgNo)
 
 void powerDown(uint16_t interval)
 {
-    // deep-sleep for sleepTime seconds
+    // deep-sleep for interval cycles
     _DEBUG(String("Going to sleep with sleep interval #") + interval);
     
 #ifdef ATTINY_CONTROLLED_POWER
     userState = USER_STATE_IDLE;
     _DEBUG("State: USER_STATE_IDLE");
     
-    digitalWrite(D0, (interval&1));
-    digitalWrite(D1, (interval&2)>>1);
-    digitalWrite(D2, (interval&4)>>2);
-    digitalWrite(D4, LOW);    // Notify Attiny
-    
-    delay(100);
+    // perform bit-banging with Attiny.
+    // D0 as Data (Attiny input, Spark output)
+    // D1 as CLK (Attiny output, Spark input)
+    const int MAXBIT = 0x8000; // highest bit to start with
+    int clk = digitalRead(D1); // initial value of CLK
+    for (int i=MAXBIT; i>0; i>>=1) {
+        digitalWrite(D0, (interval&i) ? HIGH : LOW);
+        // Notify Attiny about start of bit-banging after first bit is set
+        if (i == MAXBIT) digitalWrite(D4, LOW);
+        while (digitalRead(D1) == clk) delayRealMicros(1000);
+        clk ^= HIGH;
+    }
     
     PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 #else
 #ifdef _SERIAL_DEBUGGING_
     delay(200);
 #endif
-    Spark.sleep(SLEEP_MODE_DEEP, 1+interval);
+    Spark.sleep(SLEEP_MODE_DEEP, interval);
 #endif
 }
 
