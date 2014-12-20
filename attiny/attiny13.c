@@ -35,18 +35,14 @@ void sleep_now() {
 	wdt_disable();
 }
 
-void SleepSeconds(uint16_t seconds)
+void SleepLong(uint16_t cycles)
 {
-	//granularity 8s
-	//
-	// some more information: stopping the time showed that sleep time of 256s takes ~5s longer
-	// the reason might be the time for waking up and sleeping again in this for-loop
-	// every 8 seconds.
-	// this might contribute to some little unwanted current consumption
-	// the current consumption is low, so not really significant, but it might be a possible 
-	// optimization. For this the current consumption should be measured that occurs every 8 seconds.
-	uint16_t cycles = seconds / 8;
-	for (int i=0 ; i<cycles; i++)
+	// sleep the number of given cycles
+	// long-time tests showed that one sleep takes approx. 8.408 seconds
+	// we do not know if the difference to exactly 8 seconds is caused
+	// by inexactness of watchdog oscillator and/or by time needed for waking
+	// up and going to sleep again		
+	for (uint16_t i=0 ; i<cycles; i++)
 	{
 		wdt_init(WDTO_8S);
 		sleep_now();
@@ -55,24 +51,33 @@ void SleepSeconds(uint16_t seconds)
 
 uint16_t GetSleepTimeFromSpark()
 {
-	// get sleep duration code from Spark
-	// D1  D0  Spark
-	// PB4 PB3 Attiny
-	// 0   0   = 256s
-	// 0   1   = 1h-3min
-	// 1   0   = 1h
-	// 1   1   = 8s
-	if (PINB & (1 << PINB3) && PINB & (1 << PINB4)) return 8;
-	if (PINB & (1 << PINB3)) return (3600-180);
-	if (PINB & (1 << PINB4)) return 3600;
-	return 256/*3600*/;
+	// use PB4 (Attiny) connected to D1 of Spark as CLK (Attiny output)
+	// use PB3 (Attiny) connected to D0 of Spark as Data (Attiny input)
+	
+	uint16_t retval = 0b0000000000000000;
+	// read exactly 16 bit (2 bytes) from spark, MSB first
+	for (int i=0;i<16;i++)
+	{
+		// shift left by one position
+		retval <<= 1;
+		// if PB3 = high then set last bit to 1 by increasing
+		if (PINB & (1 << PINB3)) retval++;
+		// now toggle CLK signal with XOR
+		PORTB ^= (1<<PINB4);
+		// we do not know delay, assuming 10ms is sufficient
+		// for spark to detect CLK toggle and set D1
+		_delay_ms(10);
+	}
+
+	return retval;
 }
 
 
 int main(void)
 {
 	// define the port usage (PINB0 is output. Rest is input)
-	DDRB=0b00000100;
+	// define port PB4 as CLK output for serial communication with Spark
+	DDRB=0b00010100;
 	//MCUCR=0b00010000;
 
 	//PCMSK = (1<<PCINT1);	// pin change mask: listen to portb bit 2
@@ -92,22 +97,28 @@ int main(void)
     {
 		// turn on the LDO which will power the Spark
 		PORTB = 0b00000100;
-		// give Spark three seonds to start and wait for PinB1 which is the busy pin of the spark
-		// we also wait for PinB2 which is the busy pin of the spectra display
+		// give Spark 1.5 seonds to start and wait for PinB0 which is the busy pin of the spark
 		_delay_ms(1500);
-		while (PINB & (1 << PINB0) || PINB & (1 << PINB1))
+		while (PINB & (1 << PINB0))
+		{
+			wdt_init(WDTO_250MS);
+			sleep_now();
+		}
+		//ok, spark has finished, now get sleep time
+		uint16_t timeToSleep = GetSleepTimeFromSpark();		
+		
+		// now we also wait for PinB1 which is the busy pin of the spectra display
+		while (PINB & (1 << PINB1))
 		{
 			wdt_init(WDTO_250MS);
 			sleep_now();
 		}
 		
-		uint16_t timeToSleep = GetSleepTimeFromSpark();		
-		
 		// now spark and display is ready...turn off power...
 		PORTB = 0b00000000;  // disable LDO power
 	
 		// and wait long time till next spark action...
-		SleepSeconds(timeToSleep);
+		SleepLong(timeToSleep);
     }
 }
 
