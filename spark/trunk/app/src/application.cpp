@@ -181,9 +181,12 @@ void loop()
             _DEBUG("State: USER_STATE_CONNECTED_AWAITING_IP");
         } else if (millis() - connectingStartTs > WIFI_CONNECT_TIMEOUT) {
             // connecting timed out
-            // XXX delete credentials and power down for 10 cycles
-            WiFi.clearCredentials();
-            powerDown(10);
+            // XXX delete credentials
+            //WiFi.clearCredentials();
+            // XXX reset program counter -> start program again on power up
+            EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, (uint8_t)0);
+            //power down for 1 cycle
+            powerDown(1);
         }
         break;
     
@@ -373,7 +376,7 @@ void powerDown(uint16_t interval)
 #ifdef _SERIAL_DEBUGGING_
     delay(200);
 #endif
-    Spark.sleep(SLEEP_MODE_DEEP, interval);
+    Spark.sleep(SLEEP_MODE_DEEP, (long)interval);
 #endif
 }
 
