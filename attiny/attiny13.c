@@ -64,9 +64,11 @@ uint16_t GetSleepTimeFromSpark()
 		if (PINB & (1 << PINB3)) retval++;
 		// now toggle CLK signal with XOR
 		PORTB ^= (1<<PINB4);
-		// we do not know delay, assuming 10ms is sufficient
+		// we do not know delay, assuming 3ms is sufficient
 		// for spark to detect CLK toggle and set D1
-		_delay_ms(10);
+		// we tested 12 times with action plan -0001-0002-0003-0004 without any errors for 2ms delay.
+		// so we set to 3ms now and guess we are save.
+		_delay_ms(3);
 	}
 
 	return retval;
@@ -75,7 +77,7 @@ uint16_t GetSleepTimeFromSpark()
 
 int main(void)
 {
-	// define the port usage (PINB0 is output. Rest is input)
+	// define the port usage: PINB2 is output for LDO shutdown
 	// define port PB4 as CLK output for serial communication with Spark
 	DDRB=0b00010100;
 	//MCUCR=0b00010000;
