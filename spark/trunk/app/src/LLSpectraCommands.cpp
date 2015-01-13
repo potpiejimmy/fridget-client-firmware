@@ -92,9 +92,9 @@ namespace com_myfridget
         SPI.setClockDivider(_clockDivisor == 1 ? SPI_CLOCK_DIV16 : SPI_CLOCK_DIV2) ;
         // setting bit order to MSBFirst according the TCon module spec
         SPI.setBitOrder(MSBFIRST);
-        // according to TCon Spec CPOL = 0 (CLK is low when not sending data) and CPHA = 0 (Bit wird bei positiver Flanke ausgelesen) which corresponds to mode 1
+        // according to TCon Spec CPOL = 0 (CLK is low when not sending data) and CPHA = 0 (Bit wird bei positiver Flanke ausgelesen) which corresponds to mode 0
         // see also http://en.wikipedia.org/wiki/Serial_Peripheral_Interface_Bus
-        SPI.setDataMode(SPI_MODE1);
+        SPI.setDataMode(SPI_MODE0);
     }
     
     void UninitializeSPI()
