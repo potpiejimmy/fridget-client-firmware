@@ -31,14 +31,14 @@ namespace com_myfridget
         digitalWrite(TC_EN, HIGH);
         digitalWrite(TC_CS, HIGH);
         // wait the minimal time of 50ms according to spec before starting the command sequence with CS=LOW
-        delayRealMicros(100000); //min 50
+        delayRealMicros(50000); //min 50
         digitalWrite(TC_CS, LOW);
         //wait the minimal time of 1ms according to spec
-        delayRealMicros(2000);  //min 1
+        delayRealMicros(1000);  //min 1
         //send the header and wait minimal time
         SPI.transfer(0x08);
         SPI.transfer(0xB0);
-        delayRealMicros(10000); // min 5
+        delayRealMicros(5000); // min 5
         
         // now start writing the image
         int bufIndex=0;
@@ -62,7 +62,7 @@ namespace com_myfridget
            // if (y==299) delayRealMicros(1000);  // this one definitely is required between the two frames. Otherwise display shows nonsense.
         } 
         digitalWrite(TC_CS, HIGH);
-		delayRealMicros(20000000);
+		delayRealMicros(200000);
 		UninitializeSPI();
 //        while (digitalRead(TC_BUSY)==HIGH)        
 //        {
