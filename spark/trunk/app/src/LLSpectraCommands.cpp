@@ -62,7 +62,7 @@ namespace com_myfridget
            // if (y==299) delayRealMicros(1000);  // this one definitely is required between the two frames. Otherwise display shows nonsense.
         } 
         digitalWrite(TC_CS, HIGH);
-		delayRealMicros(2000000);
+		delayRealMicros(20000000);
 		UninitializeSPI();
 //        while (digitalRead(TC_BUSY)==HIGH)        
 //        {
