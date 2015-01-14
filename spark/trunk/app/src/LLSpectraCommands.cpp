@@ -59,7 +59,7 @@ namespace com_myfridget
                 bufIndex++;
             }
             delayRealMicros(1000); //typ 1
-            if (y==299) delayRealMicros(1000);  // this one definitely is required between the two frames. Otherwise display shows nonsense.
+           // if (y==299) delayRealMicros(1000);  // this one definitely is required between the two frames. Otherwise display shows nonsense.
         } 
         digitalWrite(TC_CS, HIGH);
 		delayRealMicros(200000);
