@@ -49,15 +49,15 @@
 // and hit any key so that the core can start up
 //#define _SERIAL_DEBUGGING_
 
+// Defines whether a large (7.4") screen is used instead of the default 4.41" inch one
+#define _EPD_LARGE_SCREEN_
+
 #define _BUF_SIZE 0x1000
 
 /* Read buffer */
 extern char _buf[_BUF_SIZE];
 /* the current clock divisor */
 extern unsigned int _clockDivisor;
-
-// The size of an EPD image
-#define SIZE_EPD_IMAGE     30000
 
 void delayRealMicros(unsigned long us);
 

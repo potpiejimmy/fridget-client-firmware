@@ -36,7 +36,11 @@ namespace com_myfridget
         //wait the minimal time of 1ms according to spec
         delayRealMicros(1000);  //min 1
         //send the header and wait minimal time
+#ifdef _EPD_LARGE_SCREEN_
+        SPI.transfer(0x04);
+#else
         SPI.transfer(0x08);
+#endif
         SPI.transfer(0xB0);
         delayRealMicros(5000); // min 5
         
@@ -89,7 +93,11 @@ namespace com_myfridget
         // that spark clock is 8Mhz and that TCon module
         // of spectra display works up to 500Khz, so I set to 16, 
         // saying that TCon is operated at 500Khz (upper limit)
-        SPI.setClockDivider(_clockDivisor == 1 ? SPI_CLOCK_DIV16 : SPI_CLOCK_DIV2) ;
+#ifdef _EPD_LARGE_SCREEN_
+        SPI.setClockDivider(SPI_CLOCK_DIV2);
+#else
+        SPI.setClockDivider(_clockDivisor == 1 ? SPI_CLOCK_DIV16 : SPI_CLOCK_DIV2);
+#endif
         // setting bit order to MSBFirst according the TCon module spec
         SPI.setBitOrder(MSBFIRST);
         // according to TCon Spec CPOL = 0 (CLK is low when not sending data) and CPHA = 0 (Bit wird bei positiver Flanke ausgelesen) which corresponds to mode 0
