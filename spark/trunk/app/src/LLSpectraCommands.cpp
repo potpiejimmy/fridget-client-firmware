@@ -47,13 +47,21 @@ namespace com_myfridget
         // now start writing the image
         int bufIndex=0;
         int avail=0;
-        for (int y = 0; y<600; y++)
+        
+#ifdef _EPD_LARGE_SCREEN_
+        const int NUMBER_OF_LINES = 1600;
+        const int SIZE_OF_LINE = 60;
+#else
+        const int NUMBER_OF_LINES = 600;
+        const int SIZE_OF_LINE = 50;
+#endif        
+        for (int y = 0; y<NUMBER_OF_LINES; y++)
         {
-            for (int x = 0; x<50; x++)
+            for (int x = 0; x<SIZE_OF_LINE; x++)
             {
                 if (bufIndex == avail)
                 {
-                    int need = (599-y)*50+(50-x);
+                    int need = ((NUMBER_OF_LINES-1)-y)*SIZE_OF_LINE+(SIZE_OF_LINE-x);
                     if (need > _BUF_SIZE) need = _BUF_SIZE;
                     avail = in->read((unsigned char*)_buf, need);
                     bufIndex = 0;
