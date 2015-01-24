@@ -25,11 +25,10 @@ namespace com_myfridget
 	int GetBatteryLoad();
 	void InitializeBatteryOverlay();
 	
-	byte[][] overlayRaster = new byte[7][2];
+	byte[][] overlayRaster = new byte[14][2];
 	byte[][] overlayPic = new byte [14][2];
 	
-	byte getOverlayRaster(int x, int y);
-	byte getOverlayPic(int x, int y);
+	byte getOverlay(byte* arr, int x, int y);
 
 #ifdef _EPD_LARGE_SCREEN_
         const int NUMBER_OF_LINES = 1600;
@@ -77,7 +76,7 @@ namespace com_myfridget
                     avail = in->read((unsigned char*)_buf, need);
                     bufIndex = 0;
                 }
-                SPI.transfer((_buf[bufIndex] & getOverlayRaster(x,y)) | getOverlayPic(x,y));
+                SPI.transfer((_buf[bufIndex] & getOverlay(overlayRaster,x,y)) | getOverlay(overlayPic,x,y));
                 delayMicroseconds(1); //min 1
                 bufIndex++;
             }
@@ -220,6 +219,20 @@ namespace com_myfridget
 		overlayRaster[5][1]=0b00000001;
 		overlayRaster[6][0]=0b11000000;
 		overlayRaster[6][1]=0b00000001;
+		overlayRaster[7][0]=0b11000000;
+		overlayRaster[7][1]=0b00000001;
+		overlayRaster[8][0]=0b11000000;
+		overlayRaster[8][1]=0b00000001;
+		overlayRaster[9][0]=0b11000000;
+		overlayRaster[9][1]=0b00000000;
+		overlayRaster[10][0]=0b11000000;
+		overlayRaster[10][1]=0b00000000;
+		overlayRaster[11][0]=0b11000000;
+		overlayRaster[11][1]=0b00000000;
+		overlayRaster[12][0]=0b11000000;
+		overlayRaster[12][1]=0b00000001;
+		overlayRaster[13][0]=0b11000000;
+		overlayRaster[13][1]=0b00000001;
 		overlayPic[0][0]= 0b00111111;
 		overlayPic[0][1]=0b11111110;
 		overlayPic[1][0]= 0b00111111;
@@ -254,83 +267,14 @@ namespace com_myfridget
 	* y = line number
 	* x = byte number in line
 	*/
-	byte getOverlayRaster(int x, int y)
+	byte getOverlay(byte* arr, int x, int y)
 	{
-		int yOverlayRaster = (y % (NUMBER_OF_LINES/2))-NUMBER_OF_LINES/2+9;
-		if (yOverlayRaster < 0 || yOverlayRaster > 6) return 0xFF;
+		int yOverlay = y/(NUMBER_OF_LINES/2)+(y % (NUMBER_OF_LINES/2))-NUMBER_OF_LINES/2+9;
+		if (yOverlay < 0 || yOverlay > 13) return 0xFF;
 		else 
 		{
 			if (x>1) return 0xFF
-			else return overlayRaster[yOverlayRaster][x];
+			else return arr[yOverlay][x];
 		}		
 	}
-	byte getOverlayPic(int x, int y)
-	{
-		int yOverlayPic = y/(NUMBER_OF_LINES/2)+(y % (NUMBER_OF_LINES/2))-NUMBER_OF_LINES/2+9;
-		if (yOverlayPic < 0 || yOverlayPic > 13) return 0xFF;
-		else 
-		{
-			if (x>1) return 0xFF
-			else return overlayPic[yOverlayPic][x];
-		}		
-	}
-/*
-// just to keep this one. It is a sequence that worked. writing alternating vertical lines of white, red, black.
-    void ShowImage(uint32_t address)
-    {
-        InitializeSPI();
-        delay(1000); //unknown
-        digitalWrite(TC_EN, HIGH);
-        digitalWrite(TC_CS, HIGH);
-        delay(50); //min 50
-        digitalWrite(TC_CS, LOW);
-        delay(1);  //min 1
-        SPI.transfer(0x08);
-        SPI.transfer(0xB0);
-        delay(5); // min 5
-        for (int y = 0; y<300; y++)
-        {
-            for (int x = 0; x<16; x++)
-            {
-                SPI.transfer(0x49);
-                delayMicroseconds(1); //min 1
-                SPI.transfer(0x24);
-                delayMicroseconds(1); //min 1
-                SPI.transfer(0x92);
-                delayMicroseconds(1); //min 1
-            }
-            SPI.transfer(0x49);
-            delayMicroseconds(1); //min 1
-            SPI.transfer(0x24);
-            delayMicroseconds(1); //min 1
-            delay(1); //typ 1
-        } 
-        delay(1); // typ 1
-        for (int y = 0; y<300; y++)
-        {
-            for (int x = 0; x<16; x++)
-            {
-                SPI.transfer(0x24);
-                delayMicroseconds(1); //min 1
-                SPI.transfer(0x92);
-                delayMicroseconds(1); //min 1
-                SPI.transfer(0x49);
-                delayMicroseconds(1); //min 1
-            }
-            SPI.transfer(0x24);
-            delayMicroseconds(1); //min 1
-            SPI.transfer(0x92);
-            delayMicroseconds(1); //min 1
-            delay(1); //typ 1
-        }
-        digitalWrite(TC_CS, HIGH);
-        do
-        {
-            delay(200);
-        }
-        while (digitalRead(TC_BUSY)==HIGH);
-        digitalWrite(TC_CS, LOW);
-        digitalWrite(TC_EN, LOW);
-        UninitializeSPI();
-    }*/
 }
