@@ -25,10 +25,10 @@ namespace com_myfridget
 	int GetBatteryLoad();
 	void InitializeBatteryOverlay();
 	
-	byte[][] overlayRaster = new byte[14][2];
-	byte[][] overlayPic = new byte [14][2];
+	byte overlayRaster[14][2];
+	byte overlayPic[14][2];
 	
-	byte getOverlay(byte* arr, int x, int y, byte neutralValue);
+	byte getOverlay(byte arr[][2], int x, int y, byte neutralValue);
 
 #ifdef _EPD_LARGE_SCREEN_
         const int NUMBER_OF_LINES = 1600;
@@ -276,13 +276,13 @@ namespace com_myfridget
 	* y = line number
 	* x = byte number in line
 	*/
-	byte getOverlay(byte* arr, int x, int y, byte neutralValue)
+	byte getOverlay(byte arr[][2], int x, int y, byte neutralValue)
 	{
 		int yOverlay = y/(NUMBER_OF_LINES/2)*7+(y % (NUMBER_OF_LINES/2))-NUMBER_OF_LINES/2+9;
 		if (yOverlay < 0 || yOverlay > 13) return neutralValue;
 		else 
 		{
-			if (x>1) return neutralValue
+			if (x>1) return neutralValue;
 			else return arr[yOverlay][x];
 		}		
 	}
