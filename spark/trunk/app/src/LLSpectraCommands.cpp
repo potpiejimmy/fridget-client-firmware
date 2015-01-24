@@ -28,7 +28,7 @@ namespace com_myfridget
 	byte[][] overlayRaster = new byte[14][2];
 	byte[][] overlayPic = new byte [14][2];
 	
-	byte getOverlay(byte* arr, int x, int y);
+	byte getOverlay(byte* arr, int x, int y, byte neutralValue);
 
 #ifdef _EPD_LARGE_SCREEN_
         const int NUMBER_OF_LINES = 1600;
@@ -76,7 +76,7 @@ namespace com_myfridget
                     avail = in->read((unsigned char*)_buf, need);
                     bufIndex = 0;
                 }
-                SPI.transfer((_buf[bufIndex] & getOverlay(overlayRaster,x,y)) | getOverlay(overlayPic,x,y));
+                SPI.transfer((_buf[bufIndex] & getOverlay(overlayRaster,x,y, 0xFF)) | getOverlay(overlayPic,x,y, 0x00));
                 delayMicroseconds(1); //min 1
                 bufIndex++;
             }
@@ -276,13 +276,13 @@ namespace com_myfridget
 	* y = line number
 	* x = byte number in line
 	*/
-	byte getOverlay(byte* arr, int x, int y)
+	byte getOverlay(byte* arr, int x, int y, byte neutralValue)
 	{
 		int yOverlay = y/(NUMBER_OF_LINES/2)*7+(y % (NUMBER_OF_LINES/2))-NUMBER_OF_LINES/2+9;
-		if (yOverlay < 0 || yOverlay > 13) return 0xFF;
+		if (yOverlay < 0 || yOverlay > 13) return neutralValue;
 		else 
 		{
-			if (x>1) return 0xFF
+			if (x>1) return neutralValue
 			else return arr[yOverlay][x];
 		}		
 	}
