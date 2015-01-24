@@ -163,6 +163,15 @@ namespace com_myfridget
 
 	void InitializeBatteryOverlay()
 	{
+		// overlay is as follows ('-'= transparent, 'B'=black, ' '=white, '='=red) :
+		// --BBBBBBBBBBBBB-
+		// --BBBBBBBBBBBBB-
+		// --BB=====     BB
+		// --BB=====     BB
+		// --BB=====     BB
+		// --BBBBBBBBBBBBB-
+		// --BBBBBBBBBBBBB-
+		// the number of = corresponds to the batteryLoad.
 		int batteryLoad = GetBatteryLoad();
 		// fill according to batteryLoad
 		byte fillLeft, fillRight;
@@ -269,7 +278,7 @@ namespace com_myfridget
 	*/
 	byte getOverlay(byte* arr, int x, int y)
 	{
-		int yOverlay = y/(NUMBER_OF_LINES/2)+(y % (NUMBER_OF_LINES/2))-NUMBER_OF_LINES/2+9;
+		int yOverlay = y/(NUMBER_OF_LINES/2)*7+(y % (NUMBER_OF_LINES/2))-NUMBER_OF_LINES/2+9;
 		if (yOverlay < 0 || yOverlay > 13) return 0xFF;
 		else 
 		{
