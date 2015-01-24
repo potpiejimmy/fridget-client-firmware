@@ -15,12 +15,29 @@
 #define TC_EN D7
 #define TC_CS D3
 #define TC_BUSY D5
+#define BATTERY A0
 
 namespace com_myfridget
 {
     // some helper methods defined below
     void InitializeSPI();
     void UninitializeSPI();
+	int GetBatteryLoad();
+	void InitializeBatteryOverlay();
+	
+	byte[][] overlayRaster = new byte[7][2];
+	byte[][] overlayPic = new byte [14][2];
+	
+	byte getOverlayRaster(int x, int y);
+	byte getOverlayPic(int x, int y);
+
+#ifdef _EPD_LARGE_SCREEN_
+        const int NUMBER_OF_LINES = 1600;
+        const int SIZE_OF_LINE = 60;
+#else
+        const int NUMBER_OF_LINES = 600;
+        const int SIZE_OF_LINE = 50;
+#endif        
 
     void ShowImage(LLInputStream* in)
     {
@@ -32,6 +49,7 @@ namespace com_myfridget
         digitalWrite(TC_CS, HIGH);
         // wait the minimal time of 50ms according to spec before starting the command sequence with CS=LOW
         delayRealMicros(50000); //min 50
+		InitializeBatteryOverlay();
         digitalWrite(TC_CS, LOW);
         //wait the minimal time of 1ms according to spec
         delayRealMicros(1000);  //min 1
@@ -48,13 +66,6 @@ namespace com_myfridget
         int bufIndex=0;
         int avail=0;
         
-#ifdef _EPD_LARGE_SCREEN_
-        const int NUMBER_OF_LINES = 1600;
-        const int SIZE_OF_LINE = 60;
-#else
-        const int NUMBER_OF_LINES = 600;
-        const int SIZE_OF_LINE = 50;
-#endif        
         for (int y = 0; y<NUMBER_OF_LINES; y++)
         {
             for (int x = 0; x<SIZE_OF_LINE; x++)
@@ -66,7 +77,7 @@ namespace com_myfridget
                     avail = in->read((unsigned char*)_buf, need);
                     bufIndex = 0;
                 }
-                SPI.transfer(_buf[bufIndex]);
+                SPI.transfer((_buf[bufIndex] & getOverlayRaster(x,y)) | getOverlayPic(x,y));
                 delayMicroseconds(1); //min 1
                 bufIndex++;
             }
@@ -119,7 +130,150 @@ namespace com_myfridget
         SPI.end();
     }
 
+	/*
+	* This method returns the battery load as integer from 0 to 10. 
+	* 0 = empty battery, up to 10 = full battery.
+	* A corresponding indicator will be displayed on spectra display.
+	* We assume here that the battery voltage is connected to the BATTERY port defined above
+	* and that the voltage is connected via a resistance divisor:
+	
+	* Battery Voltage --------
+	*                        |
+	*                       |R1|
+	*                        |
+	*                        |----- BATTERY Port Spark
+	*                        |
+	*                       |R2|
+	*                        |
+	*                       GND
+	*
+	* With R1 = 4.7kOhm and R2 = 10kOhm
+	*
+	* Supply Voltage of Spark is 3.27V, so maximum Battery Voltage is 4.8V !
+	* Battery Voltage is calculated by sparkVoltage*(R1+R2)/R2
+	* Battery load is then calculated by saying all above 4V is 10, and 3.6V is empty = 0.
+	*/
+	int GetBatteryLoad()
+	{
+		float batteryVoltage = 14.7/10 * (3.27 * analogRead(BATTERY)) / ((float) 4095);
+		float normVoltage = (batteryVoltage - 3.56)*25;
+		if (normVoltage<0) return 0;
+		if (normVoltage>10) return 10;
+		return (int) normVoltage;
+	}
 
+	void InitializeBatteryOverlay()
+	{
+		int batteryLoad = GetBatteryLoad();
+		// fill according to batteryLoad
+		byte fillLeft, fillRight;
+		switch(batteryLoad)
+		{
+			case 0: fillLeft = 0;
+					fillRight = 0;
+					break;
+			case 1: fillLeft = 8;
+					fillRight = 0;
+					break;
+			case 2: fillLeft = 12;
+					fillRight = 0;
+					break;
+			case 3: fillLeft = 14;
+					fillRight = 0;
+					break;
+			case 4: fillLeft = 15;
+					fillRight = 0;
+					break;
+			case 5: fillLeft = 15;
+					fillRight = 128;
+					break;
+			case 6: fillLeft = 15;
+					fillRight = 192;
+					break;
+			case 7: fillLeft = 15;
+					fillRight = 224;
+					break;
+			case 8: fillLeft = 15;
+					fillRight = 240;
+					break;
+			case 9: fillLeft = 15;
+					fillRight = 248;
+					break;
+			case 10:fillLeft = 15;
+					fillRight = 252;
+					break;
+			default:fillLeft = 0;
+					fillRight = 0;
+					break;
+		}					
+		overlayRaster[0][0]=0b11000000;
+		overlayRaster[0][1]=0b00000001;
+		overlayRaster[1][0]=0b11000000;
+		overlayRaster[1][1]=0b00000001;
+		overlayRaster[2][0]=0b11000000;
+		overlayRaster[2][1]=0b00000000;
+		overlayRaster[3][0]=0b11000000;
+		overlayRaster[3][1]=0b00000000;
+		overlayRaster[4][0]=0b11000000;
+		overlayRaster[4][1]=0b00000000;
+		overlayRaster[5][0]=0b11000000;
+		overlayRaster[5][1]=0b00000001;
+		overlayRaster[6][0]=0b11000000;
+		overlayRaster[6][1]=0b00000001;
+		overlayPic[0][0]= 0b00111111;
+		overlayPic[0][1]=0b11111110;
+		overlayPic[1][0]= 0b00111111;
+		overlayPic[1][1]=0b11111110;
+		overlayPic[2][0]= 0b00110000 | fillLeft;
+		overlayPic[2][1]=0b00000011 | fillRight;
+		overlayPic[3][0]= 0b00110000 | fillLeft;
+		overlayPic[3][1]=0b00000011 | fillRight;
+		overlayPic[4][0]= 0b00110000 | fillLeft;
+		overlayPic[4][1]=0b00000011 | fillRight;
+		overlayPic[5][0]= 0b00111111;
+		overlayPic[5][1]=0b11111110;
+		overlayPic[6][0]= 0b00111111;
+		overlayPic[6][1]=0b11111110;
+		overlayPic[7][0]= 0b00111111;
+		overlayPic[7][1]=0b11111110;
+		overlayPic[8][0]= 0b00111111;
+		overlayPic[8][1]=0b11111110;
+		overlayPic[9][0]= 0b00110000;
+		overlayPic[9][1]=0b00000011;
+		overlayPic[10][0]= 0b00110000;
+		overlayPic[10][1]=0b00000011;
+		overlayPic[11][0]= 0b00110000;
+		overlayPic[11][1]=0b00000011;
+		overlayPic[12][0]= 0b00111111;
+		overlayPic[12][1]=0b11111110;
+		overlayPic[13][0]= 0b00111111;
+		overlayPic[13][1]=0b11111110;
+	}
+	/* 
+	* this method returns 1 wherever the original pixel shall remain and 0 where the original pixel shall be set to white
+	* y = line number
+	* x = byte number in line
+	*/
+	byte getOverlayRaster(int x, int y)
+	{
+		int yOverlayRaster = (y % (NUMBER_OF_LINES/2))-NUMBER_OF_LINES/2+9;
+		if (yOverlayRaster < 0 || yOverlayRaster > 6) return 0xFF;
+		else 
+		{
+			if (x>1) return 0xFF
+			else return overlayRaster[yOverlayRaster][x];
+		}		
+	}
+	byte getOverlayPic(int x, int y)
+	{
+		int yOverlayPic = y/(NUMBER_OF_LINES/2)+(y % (NUMBER_OF_LINES/2))-NUMBER_OF_LINES/2+9;
+		if (yOverlayPic < 0 || yOverlayPic > 13) return 0xFF;
+		else 
+		{
+			if (x>1) return 0xFF
+			else return overlayPic[yOverlayPic][x];
+		}		
+	}
 /*
 // just to keep this one. It is a sequence that worked. writing alternating vertical lines of white, red, black.
     void ShowImage(uint32_t address)
