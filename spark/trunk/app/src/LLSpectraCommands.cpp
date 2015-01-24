@@ -278,12 +278,22 @@ namespace com_myfridget
 	*/
 	byte getOverlay(byte arr[][2], int x, int y, byte neutralValue)
 	{
-		int yOverlay = y/(NUMBER_OF_LINES/2)*7+(y % (NUMBER_OF_LINES/2))-NUMBER_OF_LINES/2+9;
-		if (yOverlay < 0 || yOverlay > 13) return neutralValue;
+		int yOverlay;
+		int offset = 0;
+		if (y<(NUMBER_OF_LINES/2))
+		{
+			yOverlay = y-NUMBER_OF_LINES/2+9;
+		}
+		else
+		{
+			yOverlay = y-NUMBER_OF_LINES+9;
+			offset += 7;			
+		}
+		if (yOverlay < 0 || yOverlay > 6) return neutralValue;
 		else 
 		{
 			if (x>1) return neutralValue;
-			else return arr[yOverlay][x];
+			else return arr[yOverlay+offset][x];
 		}		
 	}
 }
