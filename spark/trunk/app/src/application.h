@@ -50,7 +50,7 @@
 //#define _SERIAL_DEBUGGING_
 
 // Defines whether a large (7.4") screen is used instead of the default 4.41" inch one
-#define _EPD_LARGE_SCREEN_
+//#define _EPD_LARGE_SCREEN_
 
 #define _BUF_SIZE 0x1000
 

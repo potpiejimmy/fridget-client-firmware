@@ -36,6 +36,9 @@
 #include "LLRLEInputStream.h"
 
 // is power-on and power-off attiny controlled?
+// note: this controls whether bit-banging is performed with Attiny and
+// prevents the firmware from connecting to the Spark cloud on server connection
+// failure
 #define ATTINY_CONTROLLED_POWER
 // EPD TCON board connected to core?
 #define EPD_TCON_CONNECTED
@@ -265,7 +268,13 @@ void onOnline()
         _DEBUG(String("Connected to ") + SERVER_HOST_DEBUGNAME);
         connectMode = atoi(getServerParam("connectmode", "1"/*USER_CONNECT_MODE_CLOUD_ON*/));
     } else {
+#ifndef ATTINY_CONTROLLED_POWER
         _DEBUG("Server not available, connecting to cloud.");
+#else
+        _DEBUG("Server not available, powering down for 15 minutes.");
+        powerDown(15);
+        return;
+#endif
     }
     
     if (connectMode == USER_CONNECT_MODE_CLOUD_ON)
