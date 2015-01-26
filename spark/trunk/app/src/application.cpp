@@ -271,7 +271,8 @@ void onOnline()
 #ifndef ATTINY_CONTROLLED_POWER
         _DEBUG("Server not available, connecting to cloud.");
 #else
-        _DEBUG("Server not available, powering down for 15 minutes.");
+        _DEBUG("Server not available, show connection failure screen and power down for 15 minutes.");
+        updateDisplay(2); // 2 == C == connection error screen
         powerDown(15);
         return;
 #endif
