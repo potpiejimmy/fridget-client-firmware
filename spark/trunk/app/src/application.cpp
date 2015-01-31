@@ -114,10 +114,19 @@ void flashImages();
  * on power-up. */
 SYSTEM_MODE(MANUAL);
 
+/** for cloud triggered clearing of credentials */
+int clearCredentials(String args)
+{
+    WiFi.clearCredentials();
+}
+
 /* This function is called once at start up ----------------------------------*/
 void setup()
 {
     _clockDivisor = 1;
+    
+    /** for testing only - register clear credentials for cloud */
+    Spark.function("clearCredentials", clearCredentials);
     
     /* start offline */
     userState = USER_STATE_OFFLINE;
