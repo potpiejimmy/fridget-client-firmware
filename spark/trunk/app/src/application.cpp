@@ -35,6 +35,9 @@
 #include "LLInflateInputStream.h"
 #include "LLRLEInputStream.h"
 
+// Firmware version
+#define FRIDGET_FIRMWARE_VERSION "1.01"
+
 // is power-on and power-off attiny controlled?
 // note: this controls whether bit-banging is performed with Attiny and
 // prevents the firmware from connecting to the Spark cloud on server connection
@@ -118,6 +121,7 @@ SYSTEM_MODE(MANUAL);
 int clearCredentials(String args)
 {
     WiFi.clearCredentials();
+    return 0;
 }
 
 /* This function is called once at start up ----------------------------------*/
@@ -250,12 +254,12 @@ bool establishServerConnection()
      * So we try to send the initial message to the server twice.
      */
 
-    while (numberOfRetries++ < 3) {
+    while (numberOfRetries++ < 5) {
         // say hello to the server, log IP and SSID
         if (requester.request(
                 "POST",
                 url,
-                (String("*** Connected to ") + WiFi.SSID() + ", IP " + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3] + " ***").c_str(),
+                (String("*** Rev. ") + FRIDGET_FIRMWARE_VERSION + " - " + WiFi.SSID() + ", IP " + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3] + " ***").c_str(),
                 serverParamsBuf,
                 256)) {
             _DEBUG(String("<<< Received server parameters: ") + serverParamsBuf);
@@ -281,6 +285,7 @@ void onOnline()
         _DEBUG("Server not available, connecting to cloud.");
 #else
         _DEBUG("Server not available, show connection failure screen and power down for 15 minutes.");
+        enterPowerSaveMode();
         updateDisplay(2); // 2 == C == connection error screen
         powerDown(15);
         return;
