@@ -36,7 +36,7 @@
 #include "LLRLEInputStream.h"
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "1.01"
+#define FRIDGET_FIRMWARE_VERSION "1.02"
 
 // is power-on and power-off attiny controlled?
 // note: this controls whether bit-banging is performed with Attiny and
@@ -75,7 +75,7 @@
 #define EEPROM_ENTRY_PROGRAM_START   3
 
 /* WIFI connect time out (ms) */
-#define WIFI_CONNECT_TIMEOUT 30000
+#define WIFI_CONNECT_TIMEOUT 20000
 
 using namespace com_myfridget;
 
@@ -200,9 +200,9 @@ void loop()
             // XXX delete credentials
             //WiFi.clearCredentials();
             // XXX reset program counter -> start program again on power up
-            EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, (uint8_t)0);
-            //power down for 1 cycle
-            powerDown(1);
+            //EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, (uint8_t)0);
+            //power down for 20 cycles
+            powerDown(20);
         }
         break;
     
@@ -284,10 +284,10 @@ void onOnline()
 #ifndef ATTINY_CONTROLLED_POWER
         _DEBUG("Server not available, connecting to cloud.");
 #else
-        _DEBUG("Server not available, show connection failure screen and power down for 15 minutes.");
+        _DEBUG("Server not available, show connection failure screen and power down for 20 cycles.");
         enterPowerSaveMode();
         updateDisplay(2); // 2 == C == connection error screen
-        powerDown(15);
+        powerDown(20);
         return;
 #endif
     }
