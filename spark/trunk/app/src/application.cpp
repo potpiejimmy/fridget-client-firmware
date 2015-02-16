@@ -36,7 +36,7 @@
 #include "LLRLEInputStream.h"
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "1.02"
+#define FRIDGET_FIRMWARE_VERSION "1.03"
 
 // is power-on and power-off attiny controlled?
 // note: this controls whether bit-banging is performed with Attiny and
@@ -71,7 +71,7 @@
 /* EEPROM entries */
 #define EEPROM_ENTRY_PROGRAM_LENGTH  0
 #define EEPROM_ENTRY_PROGRAM_COUNTER 1
-#define EEPROM_ENTRY_RESERVED        2
+#define EEPROM_ENTRY_ERROR_COUNTER   2
 #define EEPROM_ENTRY_PROGRAM_START   3
 
 /* WIFI connect time out (ms) */
@@ -109,6 +109,7 @@ void executeOp();
 void enterPowerSaveMode();
 void updateDisplay(uint8_t imgNo);
 void powerDown(uint16_t interval);
+void handleConnectFailure();
 void flashImages();
 
 /* ############################################################# */
@@ -199,10 +200,7 @@ void loop()
             // connecting timed out
             // XXX delete credentials
             //WiFi.clearCredentials();
-            // XXX reset program counter -> start program again on power up
-            //EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, (uint8_t)0);
-            //power down for 20 cycles
-            powerDown(20);
+            handleConnectFailure();
         }
         break;
     
@@ -233,6 +231,20 @@ void loop()
     }
 }
 
+void handleConnectFailure()
+{
+    // XXX reset program counter -> start program again on power up
+    //EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, (uint8_t)0);
+    uint8_t errorCounter = EEPROM.read(EEPROM_ENTRY_ERROR_COUNTER);
+    if (errorCounter < 255)
+        EEPROM.write(EEPROM_ENTRY_ERROR_COUNTER, errorCounter + 1);
+    
+    enterPowerSaveMode();
+    updateDisplay(2); // 2 == C == connection error screen
+    //power down for 20 cycles
+    powerDown(20);
+ }
+
 const char* getServerParam(const char* param, const char* def)
 {
     const char* value = serverParams.getValue(param);
@@ -245,6 +257,7 @@ bool establishServerConnection()
     
     int numberOfRetries = 0;
     uint8_t* ipa = WiFi.localIP().raw_address();
+    uint8_t errorCounter = EEPROM.read(EEPROM_ENTRY_ERROR_COUNTER);
     
     snprintf(url, 128, "/fridget/res/debug/%s", Spark.deviceID().c_str());
     
@@ -259,7 +272,7 @@ bool establishServerConnection()
         if (requester.request(
                 "POST",
                 url,
-                (String("*** Rev. ") + FRIDGET_FIRMWARE_VERSION + " - " + WiFi.SSID() + ", IP " + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3] + " ***").c_str(),
+                (String("*** Rev. ") + FRIDGET_FIRMWARE_VERSION + " - " + WiFi.SSID() + ", IP " + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3] + ", cerr=" + errorCounter + " ***").c_str(),
                 serverParamsBuf,
                 256)) {
             _DEBUG(String("<<< Received server parameters: ") + serverParamsBuf);
@@ -268,7 +281,7 @@ bool establishServerConnection()
         } else {
             _DEBUG(String("Could not connect to ") + SERVER_HOST_DEBUGNAME + "(" + numberOfRetries + ")");
         }
-        delayRealMicros(100000);
+        delayRealMicros(200000);
     }
     return FALSE;
 }
@@ -285,12 +298,13 @@ void onOnline()
         _DEBUG("Server not available, connecting to cloud.");
 #else
         _DEBUG("Server not available, show connection failure screen and power down for 20 cycles.");
-        enterPowerSaveMode();
-        updateDisplay(2); // 2 == C == connection error screen
-        powerDown(20);
+        handleConnectFailure();
         return;
 #endif
     }
+    
+    // online - reset connection failure counter
+    EEPROM.write(EEPROM_ENTRY_ERROR_COUNTER, (uint8_t)0);
     
     if (connectMode == USER_CONNECT_MODE_CLOUD_ON)
     {
