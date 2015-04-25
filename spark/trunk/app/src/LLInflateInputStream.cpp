@@ -32,6 +32,7 @@ namespace com_myfridget
     void LLInflateInputStream::buildDictionary() {
         // first byte in stream must be dictionary size:
         dictionarySize = in->read();
+        if (!dictionarySize) dictionarySize = 0x100; // encoded 0x00 is 256
         //printf("DICTIONARY SIZE %d\n", dictionarySize);
         dictionary = new unsigned char[dictionarySize];
          
