@@ -36,7 +36,7 @@
 #include "LLRLEInputStream.h"
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "1.04"
+#define FRIDGET_FIRMWARE_VERSION "1.05"
 
 // is power-on and power-off attiny controlled?
 // note: this controls whether bit-banging is performed with Attiny and
@@ -241,8 +241,8 @@ void handleConnectFailure()
     
     enterPowerSaveMode();
     updateDisplay(2); // 2 == C == connection error screen
-    //power down for 20 cycles
-    powerDown(20);
+    //power down forever
+    powerDown(0xFFFF);
  }
 
 const char* getServerParam(const char* param, const char* def)
@@ -297,7 +297,7 @@ void onOnline()
 #ifndef ATTINY_CONTROLLED_POWER
         _DEBUG("Server not available, connecting to cloud.");
 #else
-        _DEBUG("Server not available, show connection failure screen and power down for 20 cycles.");
+        _DEBUG("Server not available, show connection failure screen and power down.");
         handleConnectFailure();
         return;
 #endif
