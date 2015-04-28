@@ -164,13 +164,13 @@ namespace com_myfridget
 	void InitializeBatteryOverlay()
 	{
 		// overlay is as follows ('-'= transparent, 'B'=black, ' '=white, '='=red) :
-		// --BBBBBBBBBBBBB-
-		// --BBBBBBBBBBBBB-
-		// --BB=====     BB
-		// --BB=====     BB
-		// --BB=====     BB
-		// --BBBBBBBBBBBBB-
-		// --BBBBBBBBBBBBB-
+		// BBBBBBBBBBBBB---
+		// BBBBBBBBBBBBB---
+		// BB=====     BB--
+		// BB=====     BB--
+		// BB=====     BB--
+		// BBBBBBBBBBBBB---
+		// BBBBBBBBBBBBB---
 		// the number of = corresponds to the batteryLoad.
 		int batteryLoad = GetBatteryLoad();
 		// fill according to batteryLoad
@@ -180,96 +180,96 @@ namespace com_myfridget
 			case 0: fillLeft = 0;
 					fillRight = 0;
 					break;
-			case 1: fillLeft = 8;
+			case 1: fillLeft = 32;
 					fillRight = 0;
 					break;
-			case 2: fillLeft = 12;
+			case 2: fillLeft = 48;
 					fillRight = 0;
 					break;
-			case 3: fillLeft = 14;
+			case 3: fillLeft = 56;
 					fillRight = 0;
 					break;
-			case 4: fillLeft = 15;
+			case 4: fillLeft = 60;
 					fillRight = 0;
 					break;
-			case 5: fillLeft = 15;
+			case 5: fillLeft = 62;
+					fillRight = 0;
+					break;
+			case 6: fillLeft = 63;
+					fillRight = 0;
+					break;
+			case 7: fillLeft = 63;
 					fillRight = 128;
 					break;
-			case 6: fillLeft = 15;
+			case 8: fillLeft = 63;
 					fillRight = 192;
 					break;
-			case 7: fillLeft = 15;
+			case 9: fillLeft = 63;
 					fillRight = 224;
 					break;
-			case 8: fillLeft = 15;
+			case 10:fillLeft = 63;
 					fillRight = 240;
-					break;
-			case 9: fillLeft = 15;
-					fillRight = 248;
-					break;
-			case 10:fillLeft = 15;
-					fillRight = 252;
 					break;
 			default:fillLeft = 0;
 					fillRight = 0;
 					break;
 		}					
-		overlayRaster[0][0]=0b11000000;
-		overlayRaster[0][1]=0b00000001;
-		overlayRaster[1][0]=0b11000000;
-		overlayRaster[1][1]=0b00000001;
-		overlayRaster[2][0]=0b11000000;
-		overlayRaster[2][1]=0b00000000;
-		overlayRaster[3][0]=0b11000000;
-		overlayRaster[3][1]=0b00000000;
-		overlayRaster[4][0]=0b11000000;
-		overlayRaster[4][1]=0b00000000;
-		overlayRaster[5][0]=0b11000000;
-		overlayRaster[5][1]=0b00000001;
-		overlayRaster[6][0]=0b11000000;
-		overlayRaster[6][1]=0b00000001;
-		overlayRaster[7][0]=0b11000000;
-		overlayRaster[7][1]=0b00000001;
-		overlayRaster[8][0]=0b11000000;
-		overlayRaster[8][1]=0b00000001;
-		overlayRaster[9][0]=0b11000000;
-		overlayRaster[9][1]=0b00000000;
-		overlayRaster[10][0]=0b11000000;
-		overlayRaster[10][1]=0b00000000;
-		overlayRaster[11][0]=0b11000000;
-		overlayRaster[11][1]=0b00000000;
-		overlayRaster[12][0]=0b11000000;
-		overlayRaster[12][1]=0b00000001;
-		overlayRaster[13][0]=0b11000000;
-		overlayRaster[13][1]=0b00000001;
-		overlayPic[0][0]= 0b00111111;
-		overlayPic[0][1]=0b11111110;
-		overlayPic[1][0]= 0b00111111;
-		overlayPic[1][1]=0b11111110;
-		overlayPic[2][0]= 0b00110000 | fillLeft;
-		overlayPic[2][1]=0b00000011 | fillRight;
-		overlayPic[3][0]= 0b00110000 | fillLeft;
-		overlayPic[3][1]=0b00000011 | fillRight;
-		overlayPic[4][0]= 0b00110000 | fillLeft;
-		overlayPic[4][1]=0b00000011 | fillRight;
-		overlayPic[5][0]= 0b00111111;
-		overlayPic[5][1]=0b11111110;
-		overlayPic[6][0]= 0b00111111;
-		overlayPic[6][1]=0b11111110;
-		overlayPic[7][0]= 0b00111111;
-		overlayPic[7][1]=0b11111110;
-		overlayPic[8][0]= 0b00111111;
-		overlayPic[8][1]=0b11111110;
-		overlayPic[9][0]= 0b00110000;
-		overlayPic[9][1]=0b00000011;
-		overlayPic[10][0]= 0b00110000;
-		overlayPic[10][1]=0b00000011;
-		overlayPic[11][0]= 0b00110000;
-		overlayPic[11][1]=0b00000011;
-		overlayPic[12][0]= 0b00111111;
-		overlayPic[12][1]=0b11111110;
-		overlayPic[13][0]= 0b00111111;
-		overlayPic[13][1]=0b11111110;
+		overlayRaster[0][0]=0b00000000;
+		overlayRaster[0][1]=0b00000111;
+		overlayRaster[1][0]=0b00000000;
+		overlayRaster[1][1]=0b00000111;
+		overlayRaster[2][0]=0b00000000;
+		overlayRaster[2][1]=0b00000011;
+		overlayRaster[3][0]=0b00000000;
+		overlayRaster[3][1]=0b00000011;
+		overlayRaster[4][0]=0b00000000;
+		overlayRaster[4][1]=0b00000011;
+		overlayRaster[5][0]=0b00000000;
+		overlayRaster[5][1]=0b00000111;
+		overlayRaster[6][0]=0b00000000;
+		overlayRaster[6][1]=0b00000111;
+		overlayRaster[7][0]=0b00000000;
+		overlayRaster[7][1]=0b00000111;
+		overlayRaster[8][0]=0b00000000;
+		overlayRaster[8][1]=0b00000111;
+		overlayRaster[9][0]=0b00000000;
+		overlayRaster[9][1]=0b00000011;
+		overlayRaster[10][0]=0b00000000;
+		overlayRaster[10][1]=0b00000011;
+		overlayRaster[11][0]=0b00000000;
+		overlayRaster[11][1]=0b00000011;
+		overlayRaster[12][0]=0b0000000;
+		overlayRaster[12][1]=0b00000111;
+		overlayRaster[13][0]=0b00000000;
+		overlayRaster[13][1]=0b00000111;
+		overlayPic[0][0]= 0b11111111;
+		overlayPic[0][1]=0b11111000;
+		overlayPic[1][0]= 0b11111111;
+		overlayPic[1][1]=0b11111000;
+		overlayPic[2][0]= 0b11000000 | fillLeft;
+		overlayPic[2][1]=0b00001100 | fillRight;
+		overlayPic[3][0]= 0b11000000 | fillLeft;
+		overlayPic[3][1]=0b00001100 | fillRight;
+		overlayPic[4][0]= 0b11000000 | fillLeft;
+		overlayPic[4][1]=0b00001100 | fillRight;
+		overlayPic[5][0]= 0b11111111;
+		overlayPic[5][1]=0b11111000;
+		overlayPic[6][0]= 0b11111111;
+		overlayPic[6][1]=0b11111000;
+		overlayPic[7][0]= 0b11111111;
+		overlayPic[7][1]=0b11111000;
+		overlayPic[8][0]= 0b11111111;
+		overlayPic[8][1]=0b11111000;
+		overlayPic[9][0]= 0b11000000;
+		overlayPic[9][1]=0b00001100;
+		overlayPic[10][0]= 0b11000000;
+		overlayPic[10][1]=0b00001100;
+		overlayPic[11][0]= 0b11000000;
+		overlayPic[11][1]=0b00001100;
+		overlayPic[12][0]= 0b11111111;
+		overlayPic[12][1]=0b11111000;
+		overlayPic[13][0]= 0b11111111;
+		overlayPic[13][1]=0b11111000;
 	}
 	/* 
 	* this method returns 1 wherever the original pixel shall remain and 0 where the original pixel shall be set to white
@@ -292,8 +292,8 @@ namespace com_myfridget
 		if (yOverlay < 0 || yOverlay > 6) return neutralValue;
 		else 
 		{
-			if (x>1) return neutralValue;
-			else return arr[yOverlay+offset][x];
+			if (x<(SIZE_OF_LINE-2)) return neutralValue;
+			else return arr[yOverlay+offset][x-(SIZE_OF_LINE-2)];
 		}		
 	}
 }
