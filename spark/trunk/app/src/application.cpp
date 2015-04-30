@@ -36,7 +36,7 @@
 #include "LLRLEInputStream.h"
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "1.05"
+#define FRIDGET_FIRMWARE_VERSION "1.06"
 
 // is power-on and power-off attiny controlled?
 // note: this controls whether bit-banging is performed with Attiny and
@@ -272,7 +272,11 @@ bool establishServerConnection()
         if (requester.request(
                 "POST",
                 url,
-                (String("*** Rev. ") + FRIDGET_FIRMWARE_VERSION + " - " + WiFi.SSID() + ", IP " + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3] + ", cerr=" + errorCounter + " ***").c_str(),
+                (String("*** Rev. ") + FRIDGET_FIRMWARE_VERSION + " - " +
+                WiFi.SSID() + ", IP " + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3] +
+                ", cerr=" + errorCounter +
+                ", voltage=" + ReadBatteryVoltage() +
+                " ***").c_str(),
                 serverParamsBuf,
                 256)) {
             _DEBUG(String("<<< Received server parameters: ") + serverParamsBuf);
