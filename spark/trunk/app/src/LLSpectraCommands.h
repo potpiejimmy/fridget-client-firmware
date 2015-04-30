@@ -22,6 +22,7 @@
 namespace com_myfridget
 {
     void ShowImage(LLInputStream* in);
+	float ReadBatteryVoltage();
 }
 
 #endif	/* _com_myfridget_LLSPECTRACOMMANDS_H_ */

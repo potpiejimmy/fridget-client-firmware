@@ -154,11 +154,16 @@ namespace com_myfridget
 	*/
 	int GetBatteryLoad()
 	{
-		float batteryVoltage = 14.7/10 * (3.27 * analogRead(BATTERY)) / ((float) 4095);
+		float batteryVoltage = ReadBatteryVoltage();
 		float normVoltage = (batteryVoltage - 3.36)*17;
 		if (normVoltage<0) return 0;
 		if (normVoltage>10) return 10;
 		return (int) normVoltage;
+	}
+	
+	float ReadBatteryVoltage()
+	{
+		return 14.7/10 * (3.27 * analogRead(BATTERY)) / ((float) 4095);
 	}
 
 	void InitializeBatteryOverlay()
