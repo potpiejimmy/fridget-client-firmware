@@ -36,7 +36,7 @@
 #include "LLRLEInputStream.h"
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "1.06"
+#define FRIDGET_FIRMWARE_VERSION "1.07"
 
 // is power-on and power-off attiny controlled?
 // note: this controls whether bit-banging is performed with Attiny and
@@ -272,11 +272,14 @@ bool establishServerConnection()
         if (requester.request(
                 "POST",
                 url,
-                (String("*** Rev. ") + FRIDGET_FIRMWARE_VERSION + " - " +
-                WiFi.SSID() + ", IP " + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3] +
-                ", cerr=" + errorCounter +
-                ", voltage=" + ReadBatteryVoltage() +
-                " ***").c_str(),
+                (String("firmware=") + FRIDGET_FIRMWARE_VERSION
+                +",ssid=" + WiFi.SSID()
+                +",IP=" + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3]
+                +",cerr=" + errorCounter
+#ifdef EPD_TCON_CONNECTED
+                +",voltage=" + ReadBatteryVoltage()
+#endif
+                ).c_str(),
                 serverParamsBuf,
                 256)) {
             _DEBUG(String("<<< Received server parameters: ") + serverParamsBuf);
@@ -310,7 +313,9 @@ void onOnline()
     // online - reset connection failure counter
     EEPROM.write(EEPROM_ENTRY_ERROR_COUNTER, (uint8_t)0);
     
-    if (connectMode == USER_CONNECT_MODE_CLOUD_ON)
+    if (connectMode == USER_CONNECT_MODE_CLOUD_ON ||
+        // Also connect to cloud if firmware differs from server firmware:
+        strcmp(getServerParam("firmware", FRIDGET_FIRMWARE_VERSION), FRIDGET_FIRMWARE_VERSION))
     {
         // Connecting cloud:
         Spark.connect();
