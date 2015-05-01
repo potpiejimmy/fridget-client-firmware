@@ -30,7 +30,7 @@ namespace com_myfridget
 	
 	byte getOverlay(byte arr[][2], int x, int y, byte neutralValue);
 
-#ifdef _EPD_LARGE_SCREEN_
+#if EPD_SCREEN_TYPE==1
         const int NUMBER_OF_LINES = 1600;
         const int SIZE_OF_LINE = 60;
 #else
@@ -53,7 +53,7 @@ namespace com_myfridget
         //wait the minimal time of 1ms according to spec
         delayRealMicros(1000);  //min 1
         //send the header and wait minimal time
-#ifdef _EPD_LARGE_SCREEN_
+#if EPD_SCREEN_TYPE==1
         SPI.transfer(0x04);
 #else
         SPI.transfer(0x08);
@@ -111,7 +111,7 @@ namespace com_myfridget
         // that spark clock is 8Mhz and that TCon module
         // of spectra display works up to 500Khz, so I set to 16, 
         // saying that TCon is operated at 500Khz (upper limit)
-#ifdef _EPD_LARGE_SCREEN_
+#if EPD_SCREEN_TYPE==1
         SPI.setClockDivider(SPI_CLOCK_DIV2);
 #else
         SPI.setClockDivider(_clockDivisor == 1 ? SPI_CLOCK_DIV16 : SPI_CLOCK_DIV2);

@@ -49,8 +49,10 @@
 // and hit any key so that the core can start up
 //#define _SERIAL_DEBUGGING_
 
-// Defines whether a large (7.4") screen is used instead of the default 4.41" inch one
-//#define _EPD_LARGE_SCREEN_
+// Defines the EPD screen type used
+// 0 = SPECTRA_DISPLAY_TYPE_441
+// 1 = SPECTRA_DISPLAY_TYPE_74
+#define EPD_SCREEN_TYPE 0
 
 #define _BUF_SIZE 0x1000
 
