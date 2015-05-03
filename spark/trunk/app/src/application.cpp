@@ -36,7 +36,7 @@
 #include "LLRLEInputStream.h"
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "1.10"
+#define FRIDGET_FIRMWARE_VERSION "1.11"
 
 // is power-on and power-off attiny controlled?
 // note: this controls whether bit-banging is performed with Attiny and
@@ -251,6 +251,18 @@ const char* getServerParam(const char* param, const char* def)
     return value ? value : def;
 }
 
+void reportVoltageToServer()
+{
+#ifdef EPD_TCON_CONNECTED
+    requester.request(
+                "POST",
+                (String("/fridget/res/debug/") + Spark.deviceID()).c_str(),
+                (String("Battery Voltage = ") + ReadBatteryVoltage()).c_str(),
+                NULL,
+                0);
+#endif
+}
+
 bool establishServerConnection()
 {
     char url[128];
@@ -276,10 +288,6 @@ bool establishServerConnection()
                 +",ssid=" + WiFi.SSID()
                 +",IP=" + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3]
                 +",cerr=" + errorCounter
-                +",screentype=" + EPD_SCREEN_TYPE
-#ifdef EPD_TCON_CONNECTED
-                +",voltage=" + 0.0f//ReadBatteryVoltage()
-#endif
                 ).c_str(),
                 serverParamsBuf,
                 256)) {
@@ -310,6 +318,9 @@ void onOnline()
         return;
 #endif
     }
+    
+    // FOR DEBUGGING VOLTAGE ONLY:
+    reportVoltageToServer();
     
     // online - reset connection failure counter
     EEPROM.write(EEPROM_ENTRY_ERROR_COUNTER, (uint8_t)0);
