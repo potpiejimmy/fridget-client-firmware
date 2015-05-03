@@ -36,7 +36,7 @@
 #include "LLRLEInputStream.h"
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "1.12"
+#define FRIDGET_FIRMWARE_VERSION "1.13"
 
 // is power-on and power-off attiny controlled?
 // note: this controls whether bit-banging is performed with Attiny and
@@ -320,9 +320,6 @@ void onOnline()
 #endif
     }
     
-    // FOR DEBUGGING VOLTAGE ONLY:
-    reportVoltageToServer();
-    
     // online - reset connection failure counter
     EEPROM.write(EEPROM_ENTRY_ERROR_COUNTER, (uint8_t)0);
     
@@ -336,6 +333,9 @@ void onOnline()
         _DEBUG("State: USER_STATE_ONLINE_WITH_CLOUD");
         return;
     }
+    
+    // FOR DEBUGGING VOLTAGE ONLY:
+    reportVoltageToServer();
     
     const char* program = getServerParam("exec", "A0000");
     uint8_t programSize = strlen(program);
