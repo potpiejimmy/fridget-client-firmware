@@ -36,7 +36,7 @@
 #include "LLRLEInputStream.h"
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "1.11"
+#define FRIDGET_FIRMWARE_VERSION "1.12"
 
 // is power-on and power-off attiny controlled?
 // note: this controls whether bit-banging is performed with Attiny and
@@ -257,7 +257,8 @@ void reportVoltageToServer()
     requester.request(
                 "POST",
                 (String("/fridget/res/debug/") + Spark.deviceID()).c_str(),
-                (String("Battery Voltage = ") + ReadBatteryVoltage()).c_str(),
+                (String("firmware=") + FRIDGET_FIRMWARE_VERSION
+                +",voltage=" + ReadBatteryVoltage()).c_str(),
                 NULL,
                 0);
 #endif
