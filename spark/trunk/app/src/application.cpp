@@ -36,7 +36,7 @@
 #include "LLRLEInputStream.h"
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "1.09"
+#define FRIDGET_FIRMWARE_VERSION "1.10"
 
 // is power-on and power-off attiny controlled?
 // note: this controls whether bit-banging is performed with Attiny and
@@ -278,7 +278,7 @@ bool establishServerConnection()
                 +",cerr=" + errorCounter
                 +",screentype=" + EPD_SCREEN_TYPE
 #ifdef EPD_TCON_CONNECTED
-                +",voltage=" + ReadBatteryVoltage()
+                +",voltage=" + 0.0f//ReadBatteryVoltage()
 #endif
                 ).c_str(),
                 serverParamsBuf,
