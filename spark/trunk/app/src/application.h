@@ -26,24 +26,40 @@
 #ifndef APPLICATION_H_
 #define APPLICATION_H_
 
+#include "particle_version.h"
+
+#ifdef SPARK_PLATFORM
+#include "platform_headers.h"
+#endif
+
 #include "spark_wiring.h"
+#include "spark_wiring_cloud.h"
 #include "spark_wiring_interrupts.h"
 #include "spark_wiring_string.h"
 #include "spark_wiring_print.h"
 #include "spark_wiring_usartserial.h"
 #include "spark_wiring_usbserial.h"
+#include "spark_wiring_usbmouse.h"
+#include "spark_wiring_usbkeyboard.h"
 #include "spark_wiring_spi.h"
 #include "spark_wiring_i2c.h"
 #include "spark_wiring_servo.h"
 #include "spark_wiring_wifi.h"
 #include "spark_wiring_network.h"
-#include "spark_wiring_client.h"  
+#include "spark_wiring_client.h"
 #include "spark_wiring_tcpclient.h"
 #include "spark_wiring_tcpserver.h"
 #include "spark_wiring_udp.h"
 #include "spark_wiring_time.h"
 #include "spark_wiring_tone.h"
 #include "spark_wiring_eeprom.h"
+#include "spark_wiring_version.h"
+#include "spark_wiring_thread.h"
+#include "fast_pin.h"
+#include "string_convert.h"
+#include "stdio.h"
+
+using namespace spark;
 
 // SERIAL DEBUGGING - if you enable this, you must connect via 9600 8N1 terminal
 // and hit any key so that the core can start up
@@ -53,6 +69,9 @@
 // 0 = SPECTRA_DISPLAY_TYPE_441
 // 1 = SPECTRA_DISPLAY_TYPE_74
 #define EPD_SCREEN_TYPE 0
+
+// Defines target platform PHOTON
+#define PLATFORM_PHOTON
 
 #define _BUF_SIZE 0x1000
 

@@ -8,6 +8,8 @@
 
 #include "LLWebRequest.h"
 
+#include "application.h"
+
 namespace com_myfridget
 {
     LLWebRequest::LLWebRequest(const char* host, int port) : host(host), port(port)

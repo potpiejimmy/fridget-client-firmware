@@ -8,7 +8,7 @@
 
 #include "LLRemoteLog.h"
 
-#include "spark_utilities.h"
+#include "application.h"
 
 namespace com_myfridget
 {
