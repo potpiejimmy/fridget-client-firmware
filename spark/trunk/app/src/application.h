@@ -6,7 +6,7 @@
   * @date    30-April-2013
   * @brief   User Application File Header
   ******************************************************************************
-  Copyright (c) 2013 Spark Labs, Inc.  All rights reserved.
+  Copyright (c) 2013-2015 Particle Industries, Inc.  All rights reserved.
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -31,6 +31,7 @@
 #ifdef SPARK_PLATFORM
 #include "platform_headers.h"
 #endif
+
 
 #include "spark_wiring.h"
 #include "spark_wiring_cloud.h"
@@ -57,13 +58,20 @@
 #include "spark_wiring_thread.h"
 #include "fast_pin.h"
 #include "string_convert.h"
+
+
+// this was being implicitly pulled in by some of the other headers
+// adding here for backwards compatibility.
+#include "system_task.h"
+#include "system_user.h"
+
 #include "stdio.h"
 
 using namespace spark;
 
 // SERIAL DEBUGGING - if you enable this, you must connect via 9600 8N1 terminal
 // and hit any key so that the core can start up
-//#define _SERIAL_DEBUGGING_
+#define _SERIAL_DEBUGGING_
 
 // Defines the EPD screen type used
 // 0 = SPECTRA_DISPLAY_TYPE_441
@@ -72,6 +80,15 @@ using namespace spark;
 
 // Defines target platform PHOTON
 #define PLATFORM_PHOTON
+
+// is power-on and power-off attiny controlled?
+// note: this controls whether bit-banging is performed with Attiny and
+// prevents the firmware from connecting to the Spark cloud on server connection
+// failure
+//#define ATTINY_CONTROLLED_POWER
+
+// EPD TCON board connected to core?
+//#define EPD_TCON_CONNECTED
 
 #define _BUF_SIZE 0x1000
 
