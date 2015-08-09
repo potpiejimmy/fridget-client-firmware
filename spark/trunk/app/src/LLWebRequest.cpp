@@ -95,7 +95,7 @@ namespace com_myfridget
     
     void LLWebRequest::stop() {
         // read the rest (if any) until server disconnects
-        while (client.connected()) client.read();
+        while (client.available()) client.read();
         client.stop();
     }
 }

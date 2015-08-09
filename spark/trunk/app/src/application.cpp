@@ -141,7 +141,7 @@ void setup()
 #ifdef _SERIAL_DEBUGGING_
     /* For serial debugging only: */
     // Make sure your Serial Terminal app is closed before powering your Core
-    Serial.begin(9600);
+    Serial.begin(115200);
 #endif
 }
 
@@ -164,7 +164,7 @@ void loop()
         _DEBUG("Core up.");
         execLen = EEPROM.read(EEPROM_ENTRY_PROGRAM_LENGTH);
         execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER);
-        _DEBUG(String("ExecLen="+execLen)+", ExecNo="+execNo);
+        _DEBUG(String("ExecLen=")+execLen+", ExecNo="+execNo);
         if (execNo >= execLen) {
             // connect to WiFi:
             WiFi.connect();
@@ -358,7 +358,7 @@ void executeOp()
     
     uint8_t execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER); // program counter
     char opName = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo);
-    _DEBUG("Execute OP " + opName);
+    _DEBUG(String("Execute OP ") + opName);
     
     // for now, only '-' (NOOP) or 'A-Z' (IMG UDPATE) allowed)
     if (opName >= 'A') updateDisplay(opName - 'A');
@@ -369,9 +369,9 @@ void executeOp()
     char interval_s[5]; interval_s[4] = 0;
     for (int i=0; i<4; i++) interval_s[i] = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+(execNo++));
     unsigned long interval = strtoul(interval_s, 0, 16);
-    _DEBUG("Execute Sleep interval " + interval);
+    _DEBUG(String("Execute Sleep interval ") + interval);
     
-    _DEBUG("Increasing execNo to " + execNo);
+    _DEBUG(String("Increasing execNo to ") + execNo);
     EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, execNo);
     
     powerDown((uint16_t)interval);
@@ -403,7 +403,7 @@ void updateDisplay(uint8_t imgNo)
     unsigned char decodeBuf[decodeBufSize];
     
     // write the image from flash to the display:
-    _DEBUG("Updating display with image no. " + imgNo);
+    _DEBUG(String("Updating display with image no. ") + imgNo);
     
     // Now link from FLASH to DECODEBUF to HUFFMAN-INFLATE to RLE-INFLATE
     LLFlashInputStream flashIn(imgNo * SIZE_EPD_SEGMENT);
@@ -419,7 +419,7 @@ void updateDisplay(uint8_t imgNo)
 void powerDown(uint16_t interval)
 {
     // deep-sleep for interval cycles
-    _DEBUG("Going to sleep with sleep interval #" + interval);
+    _DEBUG(StringSumHelper("Going to sleep with sleep interval #") + interval);
     
 #ifdef ATTINY_CONTROLLED_POWER
     userState = USER_STATE_IDLE;
@@ -441,7 +441,7 @@ void powerDown(uint16_t interval)
     PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 #else
 #ifdef _SERIAL_DEBUGGING_
-    delay(200);
+    delay(1000);
 #endif
     System.sleep(SLEEP_MODE_DEEP, (long)interval);
 #endif
@@ -483,7 +483,7 @@ void flashImages()
 
                     if (readNow != shouldRead)
                     {
-                        _DEBUG("Failed, received only " + readNow);
+                        _DEBUG(StringSumHelper("Failed, received only ") + readNow);
                         done = TRUE;
                         break;
                     }
@@ -499,9 +499,9 @@ void flashImages()
             } while (!done);
         }
         requester.stop();
-        _DEBUG(String("Wrote " + overallSize) + " bytes to flash.");
+        _DEBUG(StringSumHelper("Wrote ") + overallSize + " bytes to flash.");
         if (badBlocks > 0) {
-            _DEBUG("XXX BAD FLASH BLOCKS: " + badBlocks);
+            _DEBUG(StringSumHelper("XXX BAD FLASH BLOCKS: ") + badBlocks);
         }
     }
 }
