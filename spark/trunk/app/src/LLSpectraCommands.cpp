@@ -107,10 +107,20 @@ namespace com_myfridget
     
         // initialize SPI communication on spark
         SPI.begin();
-        // setting the clock devider to 16, assuming
-        // that spark clock is 8Mhz and that TCon module
-        // of spectra display works up to 500Khz, so I set to 16, 
-        // saying that TCon is operated at 500Khz (upper limit)
+		
+		// setting the clock dividor to operate with correct clock period for TCon module
+		// 4.41" Display: Tclk = 2.5µs (2µs min)  ==> 500kHz max.
+		// 7"    Display: Tclk = 250ns (min)      ==> 4MHz max.
+		// Spark System Clock: 8MHz
+		// Photon System Clock: 60MHz
+		// ==> to operate 7" with Photon: Divisor 15 is needed (60/15 = 4) ==> SPI_CLOCK_DIV16
+		//
+		// 7" Photon: DIV16
+		// 7" Spark: DIV2
+		// 4" Photon: DIV128
+		// 4" Spark: DIV16
+		//
+		// ugly code here: unclear why/how __clockDivisor comes into game here:
 #if EPD_SCREEN_TYPE==1
         SPI.setClockDivider(SPI_CLOCK_DIV2);
 #else
