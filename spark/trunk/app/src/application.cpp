@@ -198,11 +198,7 @@ void loop()
     
     case USER_STATE_CONNECTED_AWAITING_IP:
         // wait until IP address is set
-#ifdef PLATFORM_PHOTON
         if (WiFi.localIP().raw().ipv4) {
-#else
-        if (WiFi.localIP().raw_address()[0]) {
-#endif
             userState = USER_STATE_ONLINE;
             _DEBUG("State: USER_STATE_ONLINE");
             onOnline();
@@ -265,11 +261,7 @@ bool establishServerConnection()
     char url[128];
     
     int numberOfRetries = 0;
-#ifdef PLATFORM_PHOTON
     uint32_t ipa = WiFi.localIP().raw().ipv4;
-#else
-    uint8_t* ipa = WiFi.localIP().raw_address();
-#endif
     uint8_t errorCounter = EEPROM.read(EEPROM_ENTRY_ERROR_COUNTER);
     
     snprintf(url, 128, "/fridget/res/debug/%s", Spark.deviceID().c_str());
@@ -288,11 +280,7 @@ bool establishServerConnection()
                 url,
                 (String("firmware=") + FRIDGET_FIRMWARE_VERSION
                 +",ssid=" + WiFi.SSID()
-#ifdef PLATFORM_PHOTON
                 +",IP=" + ipa
-#else
-                +",IP=" + ipa[0] + "." + ipa[1] + "." + ipa[2] + "." + ipa[3]
-#endif
                 +",cerr=" + errorCounter
                 ).c_str(),
                 serverParamsBuf,
