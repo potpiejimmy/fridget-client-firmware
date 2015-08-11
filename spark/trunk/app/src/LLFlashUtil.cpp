@@ -74,10 +74,10 @@ namespace com_myfridget
         
         
         
-        Serial.println(String("FLASHED ")+pBuffer[0]+","+pBuffer[1]+","+pBuffer[2]+","+pBuffer[3]+","+pBuffer[4]);
-        uint8_t testread[5];
-        read(testread, address, 5);
-        Serial.println(String("READ ")+testread[0]+","+testread[1]+","+testread[2]+","+testread[3]+","+testread[4]);
+//        Serial.println(String("FLASHED ")+pBuffer[0]+","+pBuffer[1]+","+pBuffer[2]+","+pBuffer[3]+","+pBuffer[4]);
+//        uint8_t testread[5];
+//        read(testread, address, 5);
+//        Serial.println(String("READ ")+testread[0]+","+testread[1]+","+testread[2]+","+testread[3]+","+testread[4]);
         return TRUE;
 #endif
     }

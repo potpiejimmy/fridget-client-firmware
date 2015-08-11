@@ -1,0 +1,24 @@
+Check out the current Photon/Core Particle firmware (current version 0.4.3)
+
+git clone -b photon_043 https://github.com/spark/firmware.git
+
+Next, copy the build helper scripts from the build directory into
+the checked out firmware/main directory:
+
+copy build/* [git-checkout-dir]/firmware/main
+
+Adjust the precompiler settings in src/application.h if needed.
+
+Build photon or core firmwares using the build scripts in main:
+
+cd [git-checkout-dir]/firmware/main
+. fridget_photon.sh
+or
+. fridget_core.sh
+respectively.
+
+If core or photon is connected via USB and in DFU flash mode, the
+firmware is automatically flashed after the build is complete.
+
+The *.bin files for flashing via cloud are created in the src/target
+folder of the fridget sandbox.
