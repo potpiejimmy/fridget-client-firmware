@@ -26,53 +26,22 @@ namespace com_myfridget
         // XXX WARNING: with the current implementation, len should be == sFLASH_PAGESIZE
         // and the address must be a multiple of sFLASH_PAGESIZE
         
-//        const uint8_t *writeBuffer = pBuffer;
-//        uint8_t readBuffer[len];
+        const uint8_t *writeBuffer = pBuffer;
+        uint8_t readBuffer[len];
 
         /* Erase the current SPI flash page */
         sFLASH_EraseSector(((uint32_t)((FLASH_USER_MEMORY_OFFSET + address) / sFLASH_PAGESIZE)) * sFLASH_PAGESIZE);
-        delayRealMicros(20000);
+        delayRealMicros(50000);
 
         /* write */
         sFLASH_WriteBuffer(pBuffer, FLASH_USER_MEMORY_OFFSET + address, len);
-//        sFLASH_ReadBuffer(readBuffer, FLASH_USER_MEMORY_OFFSET + address, len);
+        sFLASH_ReadBuffer(readBuffer, FLASH_USER_MEMORY_OFFSET + address, len);
 
-        return TRUE; //memcmp(writeBuffer, readBuffer, len) == 0;
+        return memcmp(writeBuffer, readBuffer, len) == 0;
 #else
-//        FLASH_Update(pBuffer, FLASH_USER_MEMORY_OFFSET + address, len);
+        FLASH_EraseMemory(FLASH_INTERNAL, FLASH_USER_MEMORY_OFFSET + address, len);
         
-        
-    uint32_t index = 0;
-
-    /* Unlock the internal flash */
-    FLASH_Unlock();
-
-    FLASH_ClearFlags();
-
-    /* Data received are Word multiple */
-    for (index = 0; index < (len & 0xFFFC); index += 4)
-    {
-        FLASH_ProgramWord(FLASH_USER_MEMORY_OFFSET + address, *(uint32_t *)(pBuffer + index));
-        address += 4;
-    }
-    
-    if (len & 0x3) /* Not an aligned data */
-    {
-        char buf[4];
-        memset(buf, 0xFF, 4);
-                
-        for (index = len&3; index -->0; )
-        {
-            buf[index] = pBuffer[ (len & 0xFFFC)+index ];
-        }
-        FLASH_ProgramWord(FLASH_USER_MEMORY_OFFSET + address, *(uint32_t *)(pBuffer + index));
-        
-    }
-
-    /* Lock the internal flash */
-    FLASH_Lock();
-        
-        
+        FLASH_Update(pBuffer, FLASH_USER_MEMORY_OFFSET + address, len);
         
 //        Serial.println(String("FLASHED ")+pBuffer[0]+","+pBuffer[1]+","+pBuffer[2]+","+pBuffer[3]+","+pBuffer[4]);
 //        uint8_t testread[5];
