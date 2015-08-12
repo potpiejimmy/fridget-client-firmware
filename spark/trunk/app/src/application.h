@@ -79,7 +79,7 @@ using namespace spark;
 #define EPD_SCREEN_TYPE 1
 
 // Defines target platform PHOTON
-#define PLATFORM_PHOTON
+//#define PLATFORM_PHOTON
 
 // is power-on and power-off attiny controlled?
 // note: this controls whether bit-banging is performed with Attiny and

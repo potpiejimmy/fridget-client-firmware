@@ -36,7 +36,7 @@
 #include "LLRLEInputStream.h"
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "2.00"
+#define FRIDGET_FIRMWARE_VERSION "2.01"
 
 // user states
 #define USER_STATE_OFFLINE                0
