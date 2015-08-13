@@ -55,12 +55,13 @@ namespace com_myfridget
         {
             int contentLength = contentData ? strlen(contentData) + 2 : 0;
             char req[128];
-            snprintf(req, 128, "%s %s HTTP/1.0", httpMethod, url);
-            client.println(req);
-            client.println("Host: www.doogetha.com");
-            snprintf(req, 128, "Content-Length: %d", contentLength);
-            client.println(req);
-            client.println();
+            snprintf(req, 128, "%s %s HTTP/1.0\r\n", httpMethod, url);
+            client.print(req);
+            client.print("Host: www.doogetha.com\r\n");
+            snprintf(req, 128, "Content-Length: %d\r\n", contentLength);
+            client.print(req);
+            client.print("Connection: close\r\n");
+            client.print("\r\n");
             if (contentData)
             {
                 snprintf(req, 128, "'%s'", contentData);
@@ -85,9 +86,18 @@ namespace com_myfridget
     
     int LLWebRequest::readAll(char* readBuffer, size_t readBufferLength) {
         int bytesRead = 0;
+        int timeout = 20;
         while (client.connected() && bytesRead < readBufferLength) {
             int readNow = client.readBytes(readBuffer + bytesRead, readBufferLength - bytesRead);
-            if (readNow <= 0) break;
+            if (readNow < 0) break; // eof
+            if (readNow == 0) {
+                // shouldn't happen, but it does, so wait some millis until timeout elapsed
+                delay(100);
+                timeout--;
+                if (!timeout) break;
+            } else {
+                timeout = 20; // reset timeout if data received
+            }
             bytesRead += readNow;
         }
         return bytesRead;
