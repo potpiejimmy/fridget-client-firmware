@@ -76,7 +76,7 @@ using namespace spark;
 // Defines the EPD screen type used
 // 0 = SPECTRA_DISPLAY_TYPE_441
 // 1 = SPECTRA_DISPLAY_TYPE_74
-#define EPD_SCREEN_TYPE 1
+#define EPD_SCREEN_TYPE 0
 
 // Defines target platform PHOTON
 #define PLATFORM_PHOTON
