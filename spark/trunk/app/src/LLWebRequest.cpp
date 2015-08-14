@@ -92,7 +92,7 @@ namespace com_myfridget
             if (readNow < 0) { // eof
                 // XXX WORKAROUND FIRMWARE BUG:
                 numberOfEofsReceived++;
-                if (numberOfEofsReceived == 3) break;
+                if (numberOfEofsReceived == 50) break;
                 delay(10); readNow = 0;
             }
             bytesRead += readNow;
