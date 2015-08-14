@@ -86,18 +86,9 @@ namespace com_myfridget
     
     int LLWebRequest::readAll(char* readBuffer, size_t readBufferLength) {
         int bytesRead = 0;
-        int timeout = 20;
         while (client.connected() && bytesRead < readBufferLength) {
-            int readNow = client.readBytes(readBuffer + bytesRead, readBufferLength - bytesRead);
-            if (readNow < 0) break; // eof
-            if (readNow == 0) {
-                // shouldn't happen, but it does, so wait some millis until timeout elapsed
-                delay(100);
-                timeout--;
-                if (!timeout) break;
-            } else {
-                timeout = 20; // reset timeout if data received
-            }
+            int readNow = client.read((uint8_t*)(readBuffer + bytesRead), readBufferLength - bytesRead);
+            if (readNow <= 0) break; // eof
             bytesRead += readNow;
         }
         return bytesRead;
