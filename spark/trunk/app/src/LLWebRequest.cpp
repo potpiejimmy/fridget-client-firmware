@@ -86,9 +86,15 @@ namespace com_myfridget
     
     int LLWebRequest::readAll(char* readBuffer, size_t readBufferLength) {
         int bytesRead = 0;
+        int numberOfEofsReceived = 0;
         while (client.connected() && bytesRead < readBufferLength) {
             int readNow = client.read((uint8_t*)(readBuffer + bytesRead), readBufferLength - bytesRead);
-            if (readNow <= 0) break; // eof
+            if (readNow < 0) { // eof
+                // XXX WORKAROUND FIRMWARE BUG:
+                numberOfEofsReceived++;
+                if (numberOfEofsReceived == 3) break;
+                delay(10); readNow = 0;
+            }
             bytesRead += readNow;
         }
         return bytesRead;
@@ -96,8 +102,8 @@ namespace com_myfridget
     
     void LLWebRequest::stop() {
         // read the rest (if any) until server disconnects
-		char readBuf[64];
-		while (readAll(readBuf, 64));
+        char readBuf[64];
+        while (readAll(readBuf, 64));
         client.stop();
     }
 }
