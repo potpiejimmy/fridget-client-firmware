@@ -100,7 +100,8 @@ int main(void)
 		// turn on the LDO which will power the Spark
 		PORTB = 0b00000100;
 		// give Spark 1.5 seonds to start and wait for PinB0 which is the busy pin of the spark
-		_delay_ms(1500);
+		// 2015-08-14 Wolf: changed from 1.5s to 2.5s since with photon sometime it did not work
+		_delay_ms(2500);
 		while (PINB & (1 << PINB0))
 		{
 			wdt_init(WDTO_250MS);
