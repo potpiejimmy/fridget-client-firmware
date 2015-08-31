@@ -42,6 +42,7 @@ namespace com_myfridget
             else
             {
                 // okay, not expecting any result
+                readHeaders(); // at least read headers
                 result = TRUE;
             }
             stop();
@@ -87,23 +88,17 @@ namespace com_myfridget
     int LLWebRequest::readAll(char* readBuffer, size_t readBufferLength) {
         int bytesRead = 0;
         while (client.connected() && bytesRead < readBufferLength) {
-            // read may return 0, must call Spark.process() until data available:
+            // workaround: read may return -1 while waiting for sockat data, must call Spark.process() until data available:
             system_tick_t timeout = millis();
-            while (client.connected() && !client.available() && millis()-timeout<60000) {
-                Spark.process();
-                delay(500);
-            }
+            while (client.connected() && !client.available() && millis()-timeout<10000) Spark.process();
             int readNow = client.read((uint8_t*)(readBuffer + bytesRead), readBufferLength - bytesRead);
-            if (readNow < 0) break;
+            if (readNow <= 0) break;
             bytesRead += readNow;
         }
         return bytesRead;
     }
     
     void LLWebRequest::stop() {
-        // read the rest (if any) until server disconnects
-        char readBuf[64];
-        while (readAll(readBuf, 64));
         client.stop();
     }
 }
