@@ -7,13 +7,13 @@
 
 #include "application.h"
 #ifdef PLATFORM_PHOTON
-#include "flash_mal.h"
+#include "LLsst25vf_spi.h"
 #else
 #include "sst25vf_spi.h"
 #endif
 
 #ifdef PLATFORM_PHOTON
-#define FLASH_USER_MEMORY_OFFSET 0x80C0000
+#define FLASH_USER_MEMORY_OFFSET 0
 #else
 #define FLASH_USER_MEMORY_OFFSET 0x80000
 #endif
@@ -22,7 +22,6 @@ namespace com_myfridget
 {
     bool LLFlashUtil::flash(const uint8_t *pBuffer, uint32_t address, uint32_t len) {
 
-#ifndef PLATFORM_PHOTON
         // XXX WARNING: with the current implementation, len should be == sFLASH_PAGESIZE
         // and the address must be a multiple of sFLASH_PAGESIZE
         
@@ -41,25 +40,10 @@ namespace com_myfridget
 //        Serial.println(String("READ ")+readBuffer[0]+","+readBuffer[1]+","+readBuffer[2]+","+readBuffer[3]+","+readBuffer[4]);
 
         return TRUE;//memcmp(writeBuffer, readBuffer, len) == 0;
-#else
-        FLASH_EraseMemory(FLASH_INTERNAL, FLASH_USER_MEMORY_OFFSET + address, len);
-        
-        FLASH_Update(pBuffer, FLASH_USER_MEMORY_OFFSET + address, len);
-        
-//        Serial.println(String("FLASHED ")+pBuffer[0]+","+pBuffer[1]+","+pBuffer[2]+","+pBuffer[3]+","+pBuffer[4]);
-//        uint8_t testread[5];
-//        read(testread, address, 5);
-//        Serial.println(String("READ ")+testread[0]+","+testread[1]+","+testread[2]+","+testread[3]+","+testread[4]);
-        return TRUE;
-#endif
     }
     
     void LLFlashUtil::read(uint8_t* pBuffer, uint32_t address, uint32_t len) {
         
-#ifndef PLATFORM_PHOTON
         sFLASH_ReadBuffer(pBuffer, FLASH_USER_MEMORY_OFFSET + address, len);
-#else
-        memcpy(pBuffer, (const void*) (FLASH_USER_MEMORY_OFFSET + address), len);
-#endif
     }
 }
