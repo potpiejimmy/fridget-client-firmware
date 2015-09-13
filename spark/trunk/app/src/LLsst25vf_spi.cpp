@@ -26,6 +26,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "LLsst25vf_spi.h"
+#include "application.h"
 
 /* SST25 SPI Flash supported commands */
 #define sFLASH_CMD_RDSR					0x05		/* Read Status Register */
@@ -49,6 +50,8 @@
 #define sFLASH_SST25VF040_ID			0xBF258D	/* JEDEC Read-ID Data */
 #define sFLASH_SST25VF016_ID			0xBF2541	/* JEDEC Read-ID Data */
 
+/* ---- LL power module flash --- */
+#define LLFLASH_CS D5
 
 /* Local function forward declarations ---------------------------------------*/
 static void sFLASH_WriteByte(uint32_t WriteAddr, uint8_t byte);
@@ -65,19 +68,30 @@ static uint8_t sFLASH_SendByte(uint8_t byte);
  */
 void sFLASH_SPI_Init(void)
 {
-    /* TODO */
+    pinMode(LLFLASH_CS, OUTPUT);
+    SPI.begin();
+}
+
+void sFLASH_SPI_DeInit(void)
+{
+    SPI.end();
 }
 
 /* Select sFLASH: Chip Select pin low */
 void sFLASH_CS_LOW(void)
 {
-    /* TODO */
+    digitalWrite(LLFLASH_CS, LOW);
 }
 
 /* Deselect sFLASH: Chip Select pin high */
 void sFLASH_CS_HIGH(void)
 {
-    /* TODO */
+    digitalWrite(LLFLASH_CS, HIGH);
+}
+
+void sFLASH_DeInit(void)
+{
+    sFLASH_SPI_DeInit();
 }
 
 /**
@@ -380,19 +394,7 @@ uint32_t sFLASH_ReadID(void)
   */
 static uint8_t sFLASH_SendByte(uint8_t byte)
 {
-    // XXX TODO
-  /* Loop while DR register in not empty */
-//  while (SPI_I2S_GetFlagStatus(sFLASH_SPI, SPI_I2S_FLAG_TXE) == RESET);
-
-  /* Send byte through the SPI peripheral */
-//  SPI_I2S_SendData(sFLASH_SPI, byte);
-
-  /* Wait to receive a byte */
-//  while (SPI_I2S_GetFlagStatus(sFLASH_SPI, SPI_I2S_FLAG_RXNE) == RESET);
-
-  /* Return the byte read from the SPI bus */
-//  return SPI_I2S_ReceiveData(sFLASH_SPI);
-    return 0;
+    return SPI.transfer(byte);
 }
 
 /**

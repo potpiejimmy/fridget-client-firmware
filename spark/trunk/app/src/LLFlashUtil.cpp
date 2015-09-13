@@ -20,6 +20,18 @@
 
 namespace com_myfridget
 {
+    void LLFlashUtil::init() {
+#ifdef PLATFORM_PHOTON
+        sFLASH_Init();
+#endif
+    }
+    
+    void LLFlashUtil::stop() {
+#ifdef PLATFORM_PHOTON
+        sFLASH_DeInit();
+#endif
+    }
+    
     bool LLFlashUtil::flash(const uint8_t *pBuffer, uint32_t address, uint32_t len) {
 
         // XXX WARNING: with the current implementation, len should be == sFLASH_PAGESIZE

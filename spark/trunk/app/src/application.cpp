@@ -30,6 +30,7 @@
 #include "LLWebRequest.h"
 #include "LLFlashUtil.h"
 #include "LLSpectraCommands.h"
+#include "LLMemoryInputStream.h"
 #include "LLFlashInputStream.h"
 #include "LLBufferedBitInputStream.h"
 #include "LLInflateInputStream.h"
@@ -123,7 +124,7 @@ void setup()
     _clockDivisor = 1;
     
     /** for testing only - register clear credentials for cloud */
-    Spark.function("clearCredentials", clearCredentials);
+    Particle.function("clearCredentials", clearCredentials);
     
     /* start offline */
     userState = USER_STATE_OFFLINE;
@@ -213,8 +214,8 @@ void loop()
         break;
         
     case USER_STATE_ONLINE_WITH_CLOUD:
-        // call Spark.process() for cloud operations
-        Spark.process();
+        // call Particle.process() for cloud operations
+        Particle.process();
         break;
     
     case USER_STATE_IDLE:
@@ -248,7 +249,7 @@ void reportVoltageToServer()
 #ifdef EPD_TCON_CONNECTED
     requester.request(
                 "POST",
-                (String("/fridget/res/debug/") + Spark.deviceID()).c_str(),
+                (String("/fridget/res/debug/") + Particle.deviceID()).c_str(),
                 (String("firmware=") + FRIDGET_FIRMWARE_VERSION
                 +",voltage=" + ReadBatteryVoltage()).c_str(),
                 NULL,
@@ -264,7 +265,7 @@ bool establishServerConnection()
     uint32_t ipa = WiFi.localIP().raw().ipv4;
     uint8_t errorCounter = EEPROM.read(EEPROM_ENTRY_ERROR_COUNTER);
     
-    snprintf(url, 128, "/fridget/res/debug/%s", Spark.deviceID().c_str());
+    snprintf(url, 128, "/fridget/res/debug/%s", Particle.deviceID().c_str());
     
     /* 
      * When using Domain Names instead of IP addresses for TCPClient,
@@ -321,7 +322,7 @@ void onOnline()
         strcmp(getServerParam("firmware", FRIDGET_FIRMWARE_VERSION), FRIDGET_FIRMWARE_VERSION))
     {
         // Connecting cloud:
-        Spark.connect();
+        Particle.connect();
         userState = USER_STATE_ONLINE_WITH_CLOUD;
         _DEBUG("State: USER_STATE_ONLINE_WITH_CLOUD");
         return;
@@ -393,14 +394,31 @@ void updateDisplay(uint8_t imgNo)
     // write the image from flash to the display:
     _DEBUG(String("Updating display with image no. ") + imgNo);
     
-    // Now link from FLASH to DECODEBUF to HUFFMAN-INFLATE to RLE-INFLATE
-    LLFlashInputStream flashIn(imgNo * SIZE_EPD_SEGMENT);
-    LLBufferedBitInputStream bufIn(&flashIn, decodeBuf, decodeBufSize);
+#ifdef PLATFORM_PHOTON
+    // if enough memory available, read whole segment into memory
+    uint8_t* memoryBuffer = new uint8_t[SIZE_EPD_SEGMENT];
+    LLFlashUtil::init();
+    LLFlashUtil::read(memoryBuffer, imgNo * SIZE_EPD_SEGMENT, SIZE_EPD_SEGMENT);
+    LLFlashUtil::stop();
+
+    // link to memory
+    LLMemoryInputStream memoryIn(memoryBuffer);
+#else
+    // directly link to flash
+    LLFlashInputStream memoryIn(imgNo * SIZE_EPD_SEGMENT);
+#endif
+    
+    // Now link from FLASH/MEM to DECODEBUF to HUFFMAN-INFLATE to RLE-INFLATE
+    LLBufferedBitInputStream bufIn(&memoryIn, decodeBuf, decodeBufSize);
     LLInflateInputStream inflateIn(&bufIn);
     LLRLEInputStream rleIn(&inflateIn);
     
 #ifdef EPD_TCON_CONNECTED
     ShowImage(&rleIn);
+#endif
+
+#ifdef PLATFORM_PHOTON
+    delete memoryBuffer;
 #endif
 }
 
@@ -437,10 +455,14 @@ void powerDown(uint16_t interval)
 
 void flashImages()
 {
+#ifdef PLATFORM_PHOTON
+    LLFlashUtil::init();
+#endif
+    
     char url[128];
     
     bool done = FALSE;
-    snprintf(url, 128, "/fridget/res/img/%s/", Spark.deviceID().c_str());
+    snprintf(url, 128, "/fridget/res/img/%s/", Particle.deviceID().c_str());
     if (requester.sendRequest("GET", url, NULL))
     {
         int overallSize = 0;
@@ -492,6 +514,10 @@ void flashImages()
             _DEBUG(StringSumHelper("XXX BAD FLASH BLOCKS: ") + badBlocks);
         }
     }
+    
+#ifdef PLATFORM_PHOTON
+    LLFlashUtil::stop();
+#endif
 }
 
 void blinkLED(int on, int off)

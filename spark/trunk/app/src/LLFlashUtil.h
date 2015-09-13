@@ -15,6 +15,8 @@ namespace com_myfridget
     class LLFlashUtil
     {
     public:
+        static void init();
+        static void stop();
         static bool flash(const uint8_t *pBuffer, uint32_t address, uint32_t len);
         static void read(uint8_t* pBuffer, uint32_t address, uint32_t len);
     };
