@@ -37,21 +37,24 @@ namespace com_myfridget
         // XXX WARNING: with the current implementation, len should be == sFLASH_PAGESIZE
         // and the address must be a multiple of sFLASH_PAGESIZE
         
-//        const uint8_t *writeBuffer = pBuffer;
-//        uint8_t readBuffer[len];
+        const uint8_t *writeBuffer = pBuffer;
+        uint8_t readBuffer[len];
 
         /* Erase the current SPI flash page */
         sFLASH_EraseSector(((uint32_t)((FLASH_USER_MEMORY_OFFSET + address) / sFLASH_PAGESIZE)) * sFLASH_PAGESIZE);
+        Serial.println("Erased sector");
         delayRealMicros(25000);
 
         /* write */
         sFLASH_WriteBuffer(pBuffer, FLASH_USER_MEMORY_OFFSET + address, len);
-//        sFLASH_ReadBuffer(readBuffer, FLASH_USER_MEMORY_OFFSET + address, len);
+        Serial.println("Wrote sector");
+        sFLASH_ReadBuffer(readBuffer, FLASH_USER_MEMORY_OFFSET + address, len);
+        Serial.println("Read sector");
         
-//        Serial.println(String("FLASHED ")+pBuffer[0]+","+pBuffer[1]+","+pBuffer[2]+","+pBuffer[3]+","+pBuffer[4]);
-//        Serial.println(String("READ ")+readBuffer[0]+","+readBuffer[1]+","+readBuffer[2]+","+readBuffer[3]+","+readBuffer[4]);
+        Serial.println(String("FLASHED ")+pBuffer[0]+","+pBuffer[1]+","+pBuffer[2]+","+pBuffer[3]+","+pBuffer[4]);
+        Serial.println(String("READ ")+readBuffer[0]+","+readBuffer[1]+","+readBuffer[2]+","+readBuffer[3]+","+readBuffer[4]);
 
-        return TRUE;//memcmp(writeBuffer, readBuffer, len) == 0;
+        return memcmp(writeBuffer, readBuffer, len) == 0;
     }
     
     void LLFlashUtil::read(uint8_t* pBuffer, uint32_t address, uint32_t len) {

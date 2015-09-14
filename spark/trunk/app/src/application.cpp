@@ -111,6 +111,11 @@ void flashImages();
  * on power-up. */
 SYSTEM_MODE(MANUAL);
 
+/* Select external antenna */
+#ifdef PLATFORM_PHOTON
+STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
+#endif
+
 /** for cloud triggered clearing of credentials */
 int clearCredentials(String args)
 {
@@ -232,7 +237,6 @@ void handleConnectFailure()
     if (errorCounter < 255)
         EEPROM.write(EEPROM_ENTRY_ERROR_COUNTER, errorCounter + 1);
     
-    enterPowerSaveMode();
     updateDisplay(2); // 2 == C == connection error screen
     //power down forever
     powerDown(0xFFFF);
@@ -343,8 +347,6 @@ void onOnline()
 
 void executeOp()
 {
-    enterPowerSaveMode();
-    
     uint8_t execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER); // program counter
     char opName = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo);
     _DEBUG(String("Execute OP ") + opName);
@@ -412,6 +414,8 @@ void updateDisplay(uint8_t imgNo)
     LLBufferedBitInputStream bufIn(&memoryIn, decodeBuf, decodeBufSize);
     LLInflateInputStream inflateIn(&bufIn);
     LLRLEInputStream rleIn(&inflateIn);
+    
+    enterPowerSaveMode();
     
 #ifdef EPD_TCON_CONNECTED
     ShowImage(&rleIn);

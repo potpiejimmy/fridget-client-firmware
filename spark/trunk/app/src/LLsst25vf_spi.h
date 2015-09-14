@@ -33,11 +33,6 @@
 #define sFLASH_PAGESIZE					0x1000		/* 4096 bytes */
 #define sFLASH_PAGECOUNT                                512             /* 2MByte storage */
 
-
-//#ifdef __cplusplus
-//extern "C" {
-//#endif /* __cplusplus */
-
 /* High level functions. */
 void sFLASH_Init(void);
 void sFLASH_DeInit(void);
@@ -49,9 +44,5 @@ uint32_t sFLASH_ReadID(void);
 
 /* Flash Self Test Routine */
 int sFLASH_SelfTest(void);
-
-//#ifdef __cplusplus
-//} /* extern "C" */
-//#endif /* __cplusplus */
 
 #endif /* __LLSST25VF_SPI_H */
