@@ -37,7 +37,7 @@
 #include "LLRLEInputStream.h"
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "2.10"
+#define FRIDGET_FIRMWARE_VERSION "2.23"
 
 // user states
 #define USER_STATE_OFFLINE                0
@@ -143,6 +143,10 @@ void setup()
     pinMode(D4, OUTPUT); // Notification output BUSY
     /* Activate D4 for Attiny notification busy output */
     digitalWrite(D4, HIGH);
+    
+    pinMode(D5, OUTPUT); // D5 is external flash CS
+    pinMode(D6, OUTPUT); // D6 is external flash HOLD
+    digitalWrite(D5, HIGH); // keep flash CS on HIGH from beginning
 
 #ifdef _SERIAL_DEBUGGING_
     /* For serial debugging only: */
@@ -419,6 +423,11 @@ void updateDisplay(uint8_t imgNo)
     
 #ifdef EPD_TCON_CONNECTED
     ShowImage(&rleIn);
+#else
+#ifdef _SERIAL_DEBUGGING_
+    for (int i=0; i<60; i++)
+        Serial.println(StringSumHelper("Decompressed Image data: ") + (int)rleIn.read());
+#endif
 #endif
 
 #ifdef PLATFORM_PHOTON

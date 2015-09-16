@@ -34,7 +34,7 @@
 #define sFLASH_CMD_EWSR					0x50		/* Write Enable Status */
 #define sFLASH_CMD_WRDI					0x04		/* Write Disable */
 #define sFLASH_CMD_WREN					0x06		/* Write Enable */
-#define sFLASH_CMD_READ					0x03		/* Read Data Bytes */
+#define sFLASH_CMD_READ					0x0B		/* Read Data Bytes */
 #define sFLASH_CMD_WRITE 				0x02		/* Byte Program */
 #define sFLASH_CMD_AAIP                 0xAD		/* Auto Address Increment */
 #define sFLASH_CMD_SE             		0x20		/* 4KB Sector Erase instruction */
@@ -51,7 +51,8 @@
 #define sFLASH_SST25VF016_ID			0xBF2541	/* JEDEC Read-ID Data */
 
 /* ---- LL power module flash --- */
-#define LLFLASH_CS D5
+#define LLFLASH_CS   D5
+#define LLFLASH_HOLD D6
 
 /* Local function forward declarations ---------------------------------------*/
 static void sFLASH_WriteByte(uint32_t WriteAddr, uint8_t byte);
@@ -68,13 +69,16 @@ static uint8_t sFLASH_SendByte(uint8_t byte);
  */
 void sFLASH_SPI_Init(void)
 {
-    pinMode(LLFLASH_CS, OUTPUT);
+    digitalWrite(LLFLASH_CS, LOW);
+    digitalWrite(LLFLASH_HOLD, HIGH);
     SPI.begin();
 }
 
 void sFLASH_SPI_DeInit(void)
 {
     SPI.end();
+    digitalWrite(LLFLASH_CS, HIGH);
+    digitalWrite(LLFLASH_HOLD, LOW);
 }
 
 /* Select sFLASH: Chip Select pin low */
@@ -344,6 +348,8 @@ void sFLASH_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr, uint32_t NumByteToRe
   /* Send ReadAddr low nibble address byte to read from */
   sFLASH_SendByte(ReadAddr & 0xFF);
 
+  sFLASH_SendByte(sFLASH_DUMMY_BYTE); // this line for fast read 0x0B only
+  
   while (NumByteToRead) /* while there is data to be read */
   {
     /* Read a byte from the FLASH and point to the next location */

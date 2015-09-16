@@ -72,12 +72,12 @@ using namespace spark;
 
 // SERIAL DEBUGGING - if you enable this, you must connect via 9600 8N1 terminal
 // and hit any key so that the core can start up
-#define _SERIAL_DEBUGGING_
+//#define _SERIAL_DEBUGGING_
 
 // Defines the EPD screen type used
 // 0 = SPECTRA_DISPLAY_TYPE_441
 // 1 = SPECTRA_DISPLAY_TYPE_74
-#define EPD_SCREEN_TYPE 0
+#define EPD_SCREEN_TYPE 1
 
 // Defines target platform PHOTON
 #define PLATFORM_PHOTON
@@ -86,10 +86,10 @@ using namespace spark;
 // note: this controls whether bit-banging is performed with Attiny and
 // prevents the firmware from connecting to the Spark cloud on server connection
 // failure
-//#define ATTINY_CONTROLLED_POWER
+#define ATTINY_CONTROLLED_POWER
 
 // EPD TCON board connected to core?
-//#define EPD_TCON_CONNECTED
+#define EPD_TCON_CONNECTED
 
 #define _BUF_SIZE 0x1000
 
