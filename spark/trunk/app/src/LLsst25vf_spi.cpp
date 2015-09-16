@@ -69,7 +69,7 @@ static uint8_t sFLASH_SendByte(uint8_t byte);
  */
 void sFLASH_SPI_Init(void)
 {
-    digitalWrite(LLFLASH_CS, LOW);
+    digitalWrite(LLFLASH_CS, HIGH);
     digitalWrite(LLFLASH_HOLD, HIGH);
     SPI.begin();
 }
