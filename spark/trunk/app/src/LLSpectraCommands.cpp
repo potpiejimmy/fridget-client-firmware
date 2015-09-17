@@ -10,11 +10,6 @@
 // include application.h for global definitions
 #include "application.h"
 
-// this is the spark pins we will use beside the SPI pins.
-// for the meaning of EN and CS and BUSY, refer to ApplicationNote_EPD441_Spectra_v01.pdf in common/docs/Specifications
-#define TC_EN D7
-#define TC_CS D3
-#define TC_BUSY D5
 #define BATTERY A0
 
 namespace com_myfridget
@@ -103,7 +98,6 @@ namespace com_myfridget
     {
         pinMode(TC_EN, OUTPUT);
         pinMode(TC_CS, OUTPUT);
-        pinMode(TC_BUSY, INPUT);
     
         // initialize SPI communication on spark
         SPI.begin();

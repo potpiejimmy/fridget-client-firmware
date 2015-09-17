@@ -70,6 +70,9 @@
 
 using namespace spark;
 
+// Firmware version
+#define FRIDGET_FIRMWARE_VERSION "2.24"
+
 // SERIAL DEBUGGING - if you enable this, you must connect via 9600 8N1 terminal
 // and hit any key so that the core can start up
 //#define _SERIAL_DEBUGGING_
@@ -91,7 +94,21 @@ using namespace spark;
 // EPD TCON board connected to core?
 #define EPD_TCON_CONNECTED
 
+#ifdef PLATFORM_PHOTON
+#define _BUF_SIZE 0x8000
+#else
 #define _BUF_SIZE 0x1000
+#endif
+
+/* ---- TCON board ---- */
+// this is the spark pins we will use beside the SPI pins for the TCON board
+// for the meaning of EN and CS and BUSY, refer to ApplicationNote_EPD441_Spectra_v01.pdf in common/docs/Specifications
+#define TC_EN D7
+#define TC_CS D3
+
+/* ---- LL power module flash ---- */
+#define LLFLASH_CS   D5
+#define LLFLASH_HOLD D6
 
 /* Read buffer */
 extern char _buf[_BUF_SIZE];

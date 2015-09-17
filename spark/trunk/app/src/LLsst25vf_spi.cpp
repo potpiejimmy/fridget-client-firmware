@@ -37,7 +37,7 @@
 #define sFLASH_CMD_READ					0x0B		/* Read Data Bytes */
 #define sFLASH_CMD_WRITE 				0x02		/* Byte Program */
 #define sFLASH_CMD_AAIP                 0xAD		/* Auto Address Increment */
-#define sFLASH_CMD_SE             		0x20		/* 4KB Sector Erase instruction */
+#define sFLASH_CMD_SE             		0x52		/* 32KB Sector Erase instruction */
 #define sFLASH_CMD_BE             		0xC7		/* Bulk Chip Erase instruction */
 #define sFLASH_CMD_RDID            		0x9F		/* JEDEC ID Read */
 #define sFLASH_CMD_EBSY                 0x70		/* Enable SO RY/BY# Status */
@@ -49,10 +49,6 @@
 
 #define sFLASH_SST25VF040_ID			0xBF258D	/* JEDEC Read-ID Data */
 #define sFLASH_SST25VF016_ID			0xBF2541	/* JEDEC Read-ID Data */
-
-/* ---- LL power module flash --- */
-#define LLFLASH_CS   D5
-#define LLFLASH_HOLD D6
 
 /* Local function forward declarations ---------------------------------------*/
 static void sFLASH_WriteByte(uint32_t WriteAddr, uint8_t byte);
@@ -69,16 +65,21 @@ static uint8_t sFLASH_SendByte(uint8_t byte);
  */
 void sFLASH_SPI_Init(void)
 {
-    digitalWrite(LLFLASH_CS, HIGH);
-    digitalWrite(LLFLASH_HOLD, HIGH);
+    digitalWrite(LLFLASH_CS, HIGH);    // deselect flash for now...
+    digitalWrite(LLFLASH_HOLD, HIGH);  // ...but keep HOLD on high until DeInit
+    digitalWrite(TC_EN, HIGH); // enable TCON board (second bus member)
+    digitalWrite(TC_CS, HIGH); // ...but make sure it's deselected
     SPI.begin();
+    SPI.setBitOrder(MSBFIRST);
+    SPI.setDataMode(SPI_MODE0);
 }
 
 void sFLASH_SPI_DeInit(void)
 {
     SPI.end();
-    digitalWrite(LLFLASH_CS, HIGH);
-    digitalWrite(LLFLASH_HOLD, LOW);
+    digitalWrite(LLFLASH_CS, HIGH);    // deselect flash...
+    digitalWrite(LLFLASH_HOLD, LOW);   // ...and put HOLD on LOW.
+    digitalWrite(TC_EN, LOW); // disable TCON board
 }
 
 /* Select sFLASH: Chip Select pin low */

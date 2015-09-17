@@ -36,9 +36,6 @@
 #include "LLInflateInputStream.h"
 #include "LLRLEInputStream.h"
 
-// Firmware version
-#define FRIDGET_FIRMWARE_VERSION "2.23"
-
 // user states
 #define USER_STATE_OFFLINE                0
 #define USER_STATE_CONNECTING             1
@@ -137,16 +134,17 @@ void setup()
     /* Activate the LED output PIN */
     pinMode(D7, OUTPUT);
     
-    /* Attiny PINs: */
+    /* Attiny pins: */
     pinMode(D0, OUTPUT); // Time Interval Bit DATA
-    pinMode(D1, INPUT); // Time Interval Bit CLK (IN)
+    pinMode(D1, INPUT);  // Time Interval Bit CLK (IN)
     pinMode(D4, OUTPUT); // Notification output BUSY
     /* Activate D4 for Attiny notification busy output */
     digitalWrite(D4, HIGH);
     
-    pinMode(D5, OUTPUT); // D5 is external flash CS
-    pinMode(D6, OUTPUT); // D6 is external flash HOLD
-    digitalWrite(D5, HIGH); // keep flash CS on HIGH from beginning
+    /* External flash pins*/
+    pinMode(LLFLASH_CS, OUTPUT);    // D5 is external flash CS
+    pinMode(LLFLASH_HOLD, OUTPUT);  // D6 is external flash HOLD
+    digitalWrite(LLFLASH_CS, HIGH); // keep flash CS on HIGH from beginning
 
 #ifdef _SERIAL_DEBUGGING_
     /* For serial debugging only: */

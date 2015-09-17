@@ -43,7 +43,6 @@ namespace com_myfridget
         /* Erase the current SPI flash page */
         sFLASH_EraseSector(((uint32_t)((FLASH_USER_MEMORY_OFFSET + address) / sFLASH_PAGESIZE)) * sFLASH_PAGESIZE);
 //        Serial.println("Erased sector");
-        delayRealMicros(50000);
 
         /* write */
         sFLASH_WriteBuffer(pBuffer, FLASH_USER_MEMORY_OFFSET + address, len);
