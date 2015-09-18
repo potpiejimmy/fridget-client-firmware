@@ -131,19 +131,21 @@ void setup()
     /* start offline */
     userState = USER_STATE_OFFLINE;
 
-    /* Activate the LED output PIN */
-    pinMode(D7, OUTPUT);
+    /* Activate Enable and Chip Select for TCon Board */
+    pinMode(TC_EN, OUTPUT);
+    pinMode(TC_CS, OUTPUT);
     
     /* Attiny pins: */
-    pinMode(D0, OUTPUT); // Time Interval Bit DATA
-    pinMode(D1, INPUT);  // Time Interval Bit CLK (IN)
-    pinMode(D4, OUTPUT); // Notification output BUSY
-    /* Activate D4 for Attiny notification busy output */
-    digitalWrite(D4, HIGH);
+    pinMode(ATTINY_DATA, OUTPUT); // Time Interval Bit DATA
+    pinMode(ATTINY_CLK, INPUT);  // Time Interval Bit CLK (IN)
+    pinMode(ATTINY_BUSY, OUTPUT); // Notification output BUSY
+    
+    /* Activate ATTINY_BUSY for Attiny notification busy output */
+    digitalWrite(ATTINY_BUSY, HIGH);
     
     /* External flash pins*/
-    pinMode(LLFLASH_CS, OUTPUT);    // D5 is external flash CS
-    pinMode(LLFLASH_HOLD, OUTPUT);  // D6 is external flash HOLD
+    pinMode(LLFLASH_CS, OUTPUT);    // External flash CS
+    pinMode(LLFLASH_HOLD, OUTPUT);  // External flash HOLD
     digitalWrite(LLFLASH_CS, HIGH); // keep flash CS on HIGH from beginning
 
 #ifdef _SERIAL_DEBUGGING_
@@ -443,15 +445,15 @@ void powerDown(uint16_t interval)
     _DEBUG("State: USER_STATE_IDLE");
     
     // perform bit-banging with Attiny.
-    // D0 as Data (Attiny input, Spark output)
-    // D1 as CLK (Attiny output, Spark input)
+    // ATTINY_DATA as Data (Attiny input, Spark output)
+    // ATTINY_CLK as CLK (Attiny output, Spark input)
     const int MAXBIT = 0x8000; // highest bit to start with
-    int clk = digitalRead(D1); // initial value of CLK
+    int clk = digitalRead(ATTINY_CLK); // initial value of CLK
     for (int i=MAXBIT; i>0; i>>=1) {
-        digitalWrite(D0, (interval&i) ? HIGH : LOW);
+        digitalWrite(ATTINY_DATA, (interval&i) ? HIGH : LOW);
         // Notify Attiny about start of bit-banging after first bit is set
-        if (i == MAXBIT) digitalWrite(D4, LOW);
-        while (digitalRead(D1) == clk) delayRealMicros(1000);
+        if (i == MAXBIT) digitalWrite(ATTINY_BUSY, LOW);
+        while (digitalRead(ATTINY_CLK) == clk) delayRealMicros(1000);
         clk ^= HIGH;
     }
     

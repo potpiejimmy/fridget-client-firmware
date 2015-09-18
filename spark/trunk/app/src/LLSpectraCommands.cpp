@@ -96,9 +96,6 @@ namespace com_myfridget
     */
     void InitializeSPI()
     {
-        pinMode(TC_EN, OUTPUT);
-        pinMode(TC_CS, OUTPUT);
-    
         // initialize SPI communication on spark
         SPI.begin();
 		
