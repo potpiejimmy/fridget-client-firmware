@@ -424,10 +424,10 @@ void updateDisplay(uint8_t imgNo)
 #ifdef EPD_TCON_CONNECTED
     ShowImage(&rleIn);
 #else
-#ifdef _SERIAL_DEBUGGING_
-    for (int i=0; i<60; i++)
-        Serial.println(StringSumHelper("Decompressed Image data: ") + (int)rleIn.read());
-#endif
+//#ifdef _SERIAL_DEBUGGING_
+//    for (int i=0; i<60; i++)
+//        Serial.println(StringSumHelper("Decompressed Image data: ") + (int)rleIn.read());
+//#endif
 #endif
 
 #ifdef PLATFORM_PHOTON

@@ -1,3 +1,4 @@
+rm core-firmware-*
 echo "Building for Core, 4.41 inch screen"
 echo "#define EPD_SCREEN_TYPE 0"
 echo "//#define PLATFORM_PHOTON"
