@@ -71,7 +71,7 @@
 using namespace spark;
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "2.24"
+#define FRIDGET_FIRMWARE_VERSION "2.25"
 
 // SERIAL DEBUGGING - if you enable this, you must connect via 9600 8N1 terminal
 // and hit any key so that the core can start up
@@ -80,7 +80,7 @@ using namespace spark;
 // Defines the EPD screen type used
 // 0 = SPECTRA_DISPLAY_TYPE_441
 // 1 = SPECTRA_DISPLAY_TYPE_74
-#define EPD_SCREEN_TYPE 1
+#define EPD_SCREEN_TYPE 0
 
 // Defines target platform PHOTON
 #define PLATFORM_PHOTON

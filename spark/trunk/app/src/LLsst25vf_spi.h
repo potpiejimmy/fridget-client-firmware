@@ -28,6 +28,10 @@
 #ifndef __LLSST25VF_SPI_H
 #define __LLSST25VF_SPI_H
 
+#include "application.h"
+
+#ifdef PLATFORM_PHOTON
+
 #include <stdint.h>
 
 #define sFLASH_PAGESIZE					0x1000		/* 4096 bytes */
@@ -44,5 +48,7 @@ uint32_t sFLASH_ReadID(void);
 
 /* Flash Self Test Routine */
 int sFLASH_SelfTest(void);
+
+#endif // PLATFORM_PHOTON
 
 #endif /* __LLSST25VF_SPI_H */

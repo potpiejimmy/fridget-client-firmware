@@ -26,7 +26,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "LLsst25vf_spi.h"
-#include "application.h"
+
+#ifdef PLATFORM_PHOTON
 
 /* SST25 SPI Flash supported commands */
 #define sFLASH_CMD_RDSR					0x05		/* Read Status Register */
@@ -67,8 +68,8 @@ void sFLASH_SPI_Init(void)
 {
     digitalWrite(LLFLASH_CS, HIGH);    // deselect flash for now...
     digitalWrite(LLFLASH_HOLD, HIGH);  // ...but keep HOLD on high until DeInit
-    digitalWrite(TC_EN, HIGH); // enable TCON board (second bus member)
-    digitalWrite(TC_CS, HIGH); // ...but make sure it's deselected
+//    digitalWrite(TC_EN, HIGH); // enable TCON board (second bus member)
+//    digitalWrite(TC_CS, HIGH); // ...but make sure it's deselected
     SPI.begin();
     SPI.setBitOrder(MSBFIRST);
     SPI.setDataMode(SPI_MODE0);
@@ -79,7 +80,7 @@ void sFLASH_SPI_DeInit(void)
     SPI.end();
     digitalWrite(LLFLASH_CS, HIGH);    // deselect flash...
     digitalWrite(LLFLASH_HOLD, LOW);   // ...and put HOLD on LOW.
-    digitalWrite(TC_EN, LOW); // disable TCON board
+//    digitalWrite(TC_EN, LOW); // disable TCON board
 }
 
 /* Select sFLASH: Chip Select pin low */
@@ -534,3 +535,5 @@ int sFLASH_SelfTest(void)
 
   return TestStatus;
 }
+
+#endif // PLATFORM_PHOTON
