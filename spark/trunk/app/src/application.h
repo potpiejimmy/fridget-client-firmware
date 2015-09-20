@@ -71,11 +71,11 @@
 using namespace spark;
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "2.27d"
+#define FRIDGET_FIRMWARE_VERSION "2.28"
 
 // SERIAL DEBUGGING - if you enable this, you must connect via 9600 8N1 terminal
 // and hit any key so that the core can start up
-#define _SERIAL_DEBUGGING_
+//#define _SERIAL_DEBUGGING_
 
 // Defines the EPD screen type used
 // 0 = SPECTRA_DISPLAY_TYPE_441

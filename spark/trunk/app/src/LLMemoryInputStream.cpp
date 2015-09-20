@@ -21,6 +21,7 @@ namespace com_myfridget
     int LLMemoryInputStream::read(unsigned char* b, int len) {
         memcpy(b, memptr, len);
         memptr += len;
+        return len;
     }
     
     unsigned char LLMemoryInputStream::read() {
