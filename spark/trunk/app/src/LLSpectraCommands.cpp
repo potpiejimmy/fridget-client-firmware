@@ -35,9 +35,6 @@ namespace com_myfridget
 
     void ShowImage(LLInputStream* in)
     {
-        // XXX just a test:
-        memset(_buf, 1, _BUF_SIZE);
-        
         InitializeSPI();
        // delay(1000); //TODO: unclear how much time we need after SPI initialization. Maybe 0 is ok. To be tried....
        // tested. Works fine without delay ;-)
@@ -71,7 +68,7 @@ namespace com_myfridget
                 {
                     int need = ((NUMBER_OF_LINES-1)-y)*SIZE_OF_LINE+(SIZE_OF_LINE-x);
                     if (need > _BUF_SIZE) need = _BUF_SIZE;
-                    avail = need;// XXX in->read((unsigned char*)_buf, need);
+                    avail = in->read((unsigned char*)_buf, need);
                     bufIndex = 0;
                 }
                 SPI.transfer((_buf[bufIndex] & getOverlay(overlayRaster,x,y, 0xFF)) | getOverlay(overlayPic,x,y, 0x00));

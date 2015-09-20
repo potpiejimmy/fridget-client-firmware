@@ -407,6 +407,13 @@ void updateDisplay(uint8_t imgNo)
     LLFlashUtil::read(memoryBuffer, imgNo * SIZE_EPD_SEGMENT, SIZE_EPD_SEGMENT/2);
     LLFlashUtil::stop();
 
+#ifdef _SERIAL_DEBUGGING_
+    Serial.println();
+    Serial.println();
+    for (int i=0; i<(SIZE_EPD_SEGMENT/2); i++)
+        Serial.print((char)memoryBuffer[i]);
+#endif
+    
     // link to memory
     LLMemoryInputStream memoryIn(memoryBuffer);
 #else
@@ -419,10 +426,17 @@ void updateDisplay(uint8_t imgNo)
     LLInflateInputStream inflateIn(&bufIn);
     LLRLEInputStream rleIn(&inflateIn);
     
+#ifdef _SERIAL_DEBUGGING_
+    Serial.println();
+    Serial.println();
+    for (int i=0; i<96000; i++)
+        Serial.print((char)rleIn.read());
+#endif
+    
     enterPowerSaveMode();
     
 #ifdef EPD_TCON_CONNECTED
-    ShowImage(&rleIn);
+//    ShowImage(&rleIn);
 #else
 //#ifdef _SERIAL_DEBUGGING_
 //    for (int i=0; i<60; i++)
