@@ -402,9 +402,9 @@ void updateDisplay(uint8_t imgNo)
     
 #ifdef PLATFORM_PHOTON
     // if enough memory available, read whole segment into memory
-    uint8_t* memoryBuffer = new uint8_t[SIZE_EPD_SEGMENT];
+    uint8_t* memoryBuffer = new uint8_t[SIZE_EPD_SEGMENT/2];
     LLFlashUtil::init();
-    LLFlashUtil::read(memoryBuffer, imgNo * SIZE_EPD_SEGMENT, SIZE_EPD_SEGMENT);
+    LLFlashUtil::read(memoryBuffer, imgNo * SIZE_EPD_SEGMENT, SIZE_EPD_SEGMENT/2);
     LLFlashUtil::stop();
 
     // link to memory
