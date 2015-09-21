@@ -43,6 +43,7 @@
 #define USER_STATE_ONLINE                 3
 #define USER_STATE_ONLINE_WITH_CLOUD      4
 #define USER_STATE_IDLE                   5
+#define USER_STATE_FACTORY_RESET          6
 
 // connect modes (cloud on/off)
 #define USER_CONNECT_MODE_CLOUD_ON   1
@@ -97,7 +98,7 @@ void blinkLED(int on, int off);
 void onOnline();
 void executeOp();
 void enterPowerSaveMode();
-void updateDisplay(uint8_t imgNo);
+void updateDisplay(uint8_t imgNo, bool stayOnline);
 void powerDown(uint16_t interval);
 void handleConnectFailure();
 void flashImages();
@@ -117,6 +118,7 @@ STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 int clearCredentials(String args)
 {
     WiFi.clearCredentials();
+    userState = USER_STATE_FACTORY_RESET;
     return 0;
 }
 
@@ -185,7 +187,7 @@ void loop()
                 // Note: if no credentials are available, the loop function
                 // won't be called until smart config process completed, so
                 // we have to update the display now:
-                updateDisplay(1); // show setup image
+                updateDisplay(1, true); // show setup image (B))
             }
         } else {
             // execute next program step:
@@ -230,6 +232,11 @@ void loop()
     case USER_STATE_IDLE:
         // do nothing in idle mode
         break;
+    
+    case USER_STATE_FACTORY_RESET:
+        updateDisplay(0, false); // 0 == A == off-screen
+        powerDown(0xFFFF); // and off forever
+        break;
     }
 }
 
@@ -241,7 +248,7 @@ void handleConnectFailure()
     if (errorCounter < 255)
         EEPROM.write(EEPROM_ENTRY_ERROR_COUNTER, errorCounter + 1);
     
-    updateDisplay(2); // 2 == C == connection error screen
+    updateDisplay(2, false); // 2 == C == connection error screen
     //power down forever
     powerDown(0xFFFF);
  }
@@ -356,7 +363,7 @@ void executeOp()
     _DEBUG(String("Execute OP ") + opName);
     
     // for now, only '-' (NOOP) or 'A-Z' (IMG UDPATE) allowed)
-    if (opName >= 'A') updateDisplay(opName - 'A');
+    if (opName >= 'A') updateDisplay(opName - 'A', false);
     
     execNo++;
     
@@ -392,7 +399,7 @@ void enterPowerSaveMode()
 #endif
 }
 
-void updateDisplay(uint8_t imgNo)
+void updateDisplay(uint8_t imgNo, bool stayOnline)
 {
     const int decodeBufSize = 1024;
     unsigned char decodeBuf[decodeBufSize];
@@ -419,7 +426,7 @@ void updateDisplay(uint8_t imgNo)
     LLInflateInputStream inflateIn(&bufIn);
     LLRLEInputStream rleIn(&inflateIn);
     
-    enterPowerSaveMode();
+    if (!stayOnline) enterPowerSaveMode();
     
 #ifdef EPD_TCON_CONNECTED
     ShowImage(&rleIn);
