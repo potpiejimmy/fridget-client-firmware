@@ -127,9 +127,6 @@ void setup()
 {
     _clockDivisor = 1;
     
-    /** for testing only - register clear credentials for cloud */
-    Particle.function("clearCredentials", clearCredentials);
-    
     /* start offline */
     userState = USER_STATE_OFFLINE;
 
@@ -340,6 +337,10 @@ void onOnline()
         Particle.connect();
         userState = USER_STATE_ONLINE_WITH_CLOUD;
         _DEBUG("State: USER_STATE_ONLINE_WITH_CLOUD");
+
+        /** register clear credentials for cloud - used by factory reset operation */
+        Particle.function("clearCredentials", clearCredentials);
+    
         return;
     }
     
