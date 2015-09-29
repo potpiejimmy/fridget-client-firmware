@@ -107,9 +107,8 @@ using namespace spark;
 #define LLFLASH_HOLD D6
 
 /* ---- ATTINY ---- */
-#define ATTINY_DATA  D0
-#define ATTINY_CLK   D1
-#define ATTINY_BUSY  D4
+#define ATTINY_DATA_BUSY    D0
+#define ATTINY_CLK          D1
 
 /* Read buffer */
 extern char _buf[_BUF_SIZE];

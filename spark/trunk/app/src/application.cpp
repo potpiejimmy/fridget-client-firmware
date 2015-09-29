@@ -135,12 +135,11 @@ void setup()
     pinMode(TC_CS, OUTPUT);
     
     /* Attiny pins: */
-    pinMode(ATTINY_DATA, OUTPUT); // Time Interval Bit DATA
+    pinMode(ATTINY_DATA_BUSY, OUTPUT); // Time Interval Bit DATA
     pinMode(ATTINY_CLK, INPUT);  // Time Interval Bit CLK (IN)
-    pinMode(ATTINY_BUSY, OUTPUT); // Notification output BUSY
     
-    /* Activate ATTINY_BUSY for Attiny notification busy output */
-    digitalWrite(ATTINY_BUSY, HIGH);
+    /* Activate ATTINY_DATA_BUSY for Attiny notification busy output */
+    digitalWrite(ATTINY_DATA_BUSY, HIGH);
     
     /* External flash pins*/
     pinMode(LLFLASH_CS, OUTPUT);    // External flash CS
@@ -453,17 +452,21 @@ void powerDown(uint16_t interval)
     _DEBUG("State: USER_STATE_IDLE");
     
     // perform bit-banging with Attiny.
-    // ATTINY_DATA as Data (Attiny input, Spark output)
+    // ATTINY_DATA_BUSY as Data (Attiny input, Spark output)
     // ATTINY_CLK as CLK (Attiny output, Spark input)
     const int MAXBIT = 0x8000; // highest bit to start with
     int clk = digitalRead(ATTINY_CLK); // initial value of CLK
+    // Notify Attiny about start of bit-banging by setting busy to LOW
+    digitalWrite(ATTINY_DATA_BUSY, LOW);
     for (int i=MAXBIT; i>0; i>>=1) {
-        digitalWrite(ATTINY_DATA, (interval&i) ? HIGH : LOW);
-        // Notify Attiny about start of bit-banging after first bit is set
-        if (i == MAXBIT) digitalWrite(ATTINY_BUSY, LOW);
+        // wait for first clock toggle
         while (digitalRead(ATTINY_CLK) == clk) delayRealMicros(1000);
         clk ^= HIGH;
+        // write next bit
+        digitalWrite(ATTINY_DATA_BUSY, (interval&i) ? HIGH : LOW);
     }
+    // and wait for final clk toggle to make sure that last bit is read by attiny before powering down
+    while (digitalRead(ATTINY_CLK) == clk) delayRealMicros(1000);
     
     PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 #else

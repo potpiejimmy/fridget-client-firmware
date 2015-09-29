@@ -71,8 +71,6 @@ uint16_t GetSleepTimeFromSpark()
 	{
 		/* shift left by one position */
 		retval <<= 1;
-		/* read first bit: if PB3 = high then set last bit to 1 by increasing */
-		if (PINB & (1 << PINB3)) retval++;
 		/* now toggle CLK signal with XOR */
 		PORTB ^= (1<<PINB4);
 		/* we do not know delay, assuming 3ms is sufficient
@@ -80,7 +78,11 @@ uint16_t GetSleepTimeFromSpark()
 		   we tested 12 times with action plan -0001-0002-0003-0004 without any errors for 2ms delay.
 		   so we set to 3ms now and guess we are save. */
 		_delay_ms(3);
+		/* read first bit: if PB3 = high then set last bit to 1 by increasing */
+		if (PINB & (1 << PINB3)) retval++;
 	}
+    /* final toggle to tell Spark/Photon that it can power down */
+    PORTB ^= (1<<PINB4);
 	/* return the number of sleep cycles read from spark/photon */
 	return retval;
 }
@@ -109,10 +111,10 @@ int main(void)
     {
 		// turn on the LDO which will power the Spark
 		PORTB = 0b00000100;
-		// give Spark 1.5 seonds to start and wait for PinB0 which is the busy pin of the spark
+		// give Spark 1.5 seonds to start and wait for PinB3 which is the busy pin of the spark
 		// 2015-08-14 Wolf: changed from 1.5s to 2.5s since with photon sometime it did not work
 		_delay_ms(2500);
-		while (PINB & (1 << PINB0))
+		while (PINB & (1 << PINB3))
 		{
 			wdt_init(WDTO_250MS);
 			sleep_now();
