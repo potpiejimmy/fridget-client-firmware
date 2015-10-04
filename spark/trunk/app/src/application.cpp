@@ -44,6 +44,7 @@
 #define USER_STATE_ONLINE_WITH_CLOUD      4
 #define USER_STATE_IDLE                   5
 #define USER_STATE_FACTORY_RESET          6
+#define USER_STATE_SWITCH_IMAGE           7
 
 // connect modes (cloud on/off)
 #define USER_CONNECT_MODE_CLOUD_ON   1
@@ -170,6 +171,14 @@ void loop()
         }
 #endif
         _DEBUG("Core up.");
+        
+        /* if ATTINY_CLK is high, we are in switch image mode */
+        if (digitalRead(ATTINY_CLK) == HIGH)
+        {
+            userState = USER_STATE_SWITCH_IMAGE;
+            break;
+        }
+        
         execLen = EEPROM.read(EEPROM_ENTRY_PROGRAM_LENGTH);
         execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER);
         _DEBUG(String("ExecLen=")+execLen+", ExecNo="+execNo);
@@ -189,6 +198,18 @@ void loop()
             // execute next program step:
             executeOp();
         }
+        break;
+        
+    case USER_STATE_SWITCH_IMAGE:
+        /* we just switch to next image without increasing program counter */
+        
+        /* for now we simply go back one step in program and repeat the last step */
+        execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER);
+        
+        if (execNo>0)
+            EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, execNo-1);
+        executeOp();
+            
         break;
 
     case USER_STATE_CONNECTING:
@@ -451,23 +472,26 @@ void powerDown(uint16_t interval)
     userState = USER_STATE_IDLE;
     _DEBUG("State: USER_STATE_IDLE");
     
-    // perform bit-banging with Attiny.
-    // ATTINY_DATA_BUSY as Data (Attiny input, Spark output)
-    // ATTINY_CLK as CLK (Attiny output, Spark input)
-    const int MAXBIT = 0x8000; // highest bit to start with
-    int clk = digitalRead(ATTINY_CLK); // initial value of CLK
-    // Notify Attiny about start of bit-banging by setting busy to LOW
-    digitalWrite(ATTINY_DATA_BUSY, LOW);
-    for (int i=MAXBIT; i>0; i>>=1) {
-        // wait for first clock toggle
+    /* skip bit banging if we are in Switch Image mode */
+    if(digitalRead(ATTINY_CLK) == LOW)
+    {
+        // perform bit-banging with Attiny.
+        // ATTINY_DATA_BUSY as Data (Attiny input, Spark output)
+        // ATTINY_CLK as CLK (Attiny output, Spark input)
+        const int MAXBIT = 0x8000; // highest bit to start with
+        int clk = digitalRead(ATTINY_CLK); // initial value of CLK
+        // Notify Attiny about start of bit-banging by setting busy to LOW
+        digitalWrite(ATTINY_DATA_BUSY, LOW);
+        for (int i=MAXBIT; i>0; i>>=1) {
+            // wait for first clock toggle
+            while (digitalRead(ATTINY_CLK) == clk) delayRealMicros(1000);
+            clk ^= HIGH;
+            // write next bit
+            digitalWrite(ATTINY_DATA_BUSY, (interval&i) ? HIGH : LOW);
+        }
+        // and wait for final clk toggle to make sure that last bit is read by attiny before powering down
         while (digitalRead(ATTINY_CLK) == clk) delayRealMicros(1000);
-        clk ^= HIGH;
-        // write next bit
-        digitalWrite(ATTINY_DATA_BUSY, (interval&i) ? HIGH : LOW);
     }
-    // and wait for final clk toggle to make sure that last bit is read by attiny before powering down
-    while (digitalRead(ATTINY_CLK) == clk) delayRealMicros(1000);
-    
     PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 #else
 #ifdef _SERIAL_DEBUGGING_
