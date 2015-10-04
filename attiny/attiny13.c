@@ -15,6 +15,9 @@
 #include <avr/wdt.h>
 //#include <avr/power.h>
 
+/* global variable to decide if button was pressed when waking up */
+volatile int g_buttonPressed;
+
 /* initialize the watchdog */
 void wdt_init(uint8_t timeout) {
 	/* globally disable all interrupts */
@@ -50,13 +53,25 @@ void SleepLong(uint16_t cycles)
 	   we do not know if the difference to exactly 8 seconds is caused
 	   by inexactness of watchdog oscillator and/or by time needed for waking
 	   up and going to sleep again */
+
+	/* enable pin change interrupt on pin pcint0 only */
+	PCMSK = (1<<PCINT0);
+	
+	/* go to sleep for the number of cycles given by spark/photon */
 	for (uint16_t i=0 ; i<cycles; i++)
 	{
 		/* initialize the watchdog */
 		wdt_init(WDTO_8S);
 		/* and sleep */
 		sleep_now();
+		/* if woke up by button press, then leave sleep loop */
+		if (g_buttonPressed) break;
 	}
+	
+	/* disable interrupts on pin */
+	PCMSK = 0b00000000;
+	/* and set back the button pressed variable to false */
+	g_buttonPressed = 0;
 }
 
 /* Get the number of sleep cycles from spark/photon */
@@ -91,7 +106,7 @@ uint16_t GetSleepTimeFromSpark()
 /* pin0 is used to wake up attiny from sleep mode by button */
 /* internal pull-up will set level to HIGH. Button will connect to GND and */
 /* thus generate a high to low edge */
-void EnablePin0Interrupt()
+void EnablePinChangeInterrupt()
 {
 	/* enable the internal pull-up resistor for PIN0 by setting to HIGH */
 	PORTB |= (1<<PCINT0);
@@ -99,8 +114,6 @@ void EnablePin0Interrupt()
 	MCUCR |= (1<<ISC01);
 	/* enable pin change interrupts */
 	GIMSK |= (1<<PCIE);
-	/* enable interrupts on pin pcint0 only */
-	PCMSK = (1<<PCINT0);
 }
 
 
@@ -110,11 +123,16 @@ int main(void)
 	/* define the port usage: PINB2 is output for LDO shutdown
 	   define port PB4 as CLK output for serial communication with Spark */
 	DDRB=0b00010100;
+	
+	/* initialize the button pressed variable with false */
+	g_buttonPressed = 0;
 
 	/* disable power and wait three seconds to ensure stable start of LDO and spark after three seconds
 	   this time can surely be reduced, but it will only play a role after plugging system to battery */
 	PORTB = 0b00000000;  // disable LDO power and set all ports to LOW
 	_delay_ms(3000);
+	
+	EnablePinChangeInterrupt();
 
     while(1)
     {
@@ -150,7 +168,8 @@ int main(void)
 
 ISR(PCINT0_vect)	     
 {			     
-	// do nothing, just wake up.
+	/* set the button pressed variable to true */
+	g_buttonPressed = 1;
 }
 
 
