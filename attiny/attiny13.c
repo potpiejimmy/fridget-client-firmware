@@ -1,5 +1,5 @@
 /*
- * GccApplication1.c
+ * Main.c
  *
  * Created: 08.11.2014 18:44:30
  *  Author: Wolf
@@ -87,6 +87,23 @@ uint16_t GetSleepTimeFromSpark()
 	return retval;
 }
 
+/* enables the interrupts on pin0 */
+/* pin0 is used to wake up attiny from sleep mode by button */
+/* internal pull-up will set level to HIGH. Button will connect to GND and */
+/* thus generate a high to low edge */
+void EnablePin0Interrupt()
+{
+	/* enable the internal pull-up resistor for PIN0 by setting to HIGH */
+	PORTB |= (1<<PCINT0);
+	/* define the trigger type: trigger on falling edge isc01=1, isc00=0 */
+	MCUCR |= (1<<ISC01);
+	/* enable pin change interrupts */
+	GIMSK |= (1<<PCIE);
+	/* enable interrupts on pin pcint0 only */
+	PCMSK = (1<<PCINT0);
+}
+
+
 /* the main routine. startup, wait for spark/photon and display update, sleep */
 int main(void)
 {
@@ -94,57 +111,48 @@ int main(void)
 	   define port PB4 as CLK output for serial communication with Spark */
 	DDRB=0b00010100;
 
-	//PCMSK = (1<<PCINT1);	// pin change mask: listen to portb bit 2
-	//GIMSK |= (1<<PCIE);	// enable PCINT interrupt
-	//MCUCR |= (1<<ISC01);
-	//MCUCR &= 0b11111110;
-	//sei();
-
-	//wdt_init();
-	
-	// disable power and wait three seconds to ensure stable start of LDO and spark after three seconds
-	// this time can surely be reduced, but it will only play a role after plugging system to battery
-	PORTB = 0b00000000;  // disable LDO power
+	/* disable power and wait three seconds to ensure stable start of LDO and spark after three seconds
+	   this time can surely be reduced, but it will only play a role after plugging system to battery */
+	PORTB = 0b00000000;  // disable LDO power and set all ports to LOW
 	_delay_ms(3000);
-	
+
     while(1)
     {
-		// turn on the LDO which will power the Spark
-		PORTB = 0b00000100;
-		// give Spark 1.5 seonds to start and wait for PinB3 which is the busy pin of the spark
+		/* turn on the LDO which will power the Spark */
+		PORTB |= (1<<PINB2); 
+		/* give Spark 1.5 seonds to start and wait for PinB3 which is the busy pin of the spark */
 		// 2015-08-14 Wolf: changed from 1.5s to 2.5s since with photon sometime it did not work
 		_delay_ms(2500);
+		/* wait till spark/photon puts PINB3=D1 to low */
 		while (PINB & (1 << PINB3))
 		{
 			wdt_init(WDTO_250MS);
 			sleep_now();
 		}
-		//ok, spark has finished, now get sleep time
+		/* ok, spark has finished, now get sleep time */
 		uint16_t timeToSleep = GetSleepTimeFromSpark();		
 		
-		// now we also wait for PinB1 which is the busy pin of the spectra display
+		/* now we also wait for PinB1 which is the busy pin of the spectra display */
 		while (PINB & (1 << PINB1))
 		{
 			wdt_init(WDTO_250MS);
 			sleep_now();
 		}
 		
-		// now spark and display is ready...turn off power...
-		PORTB = 0b00000000;  // disable LDO power
+		/* now spark and display is ready...turn off power... */
+		PORTB &= 0b11111011;  // disable LDO power
 	
-		// and wait long time till next spark action...
+		/* and wait long time till next spark action... */
 		SleepLong(timeToSleep);
     }
 }
 
-/*
-ISR(PCINT0_vect)	     // interrupt service routine
-{			     // called when PCINT0 changes state
-	if (!(PINB & (1 << PINB1)))
-	//	PORTB = (PORTB ^ 0x01);   // toggle red led, portb bit 5, pin 3
-	return;
+
+ISR(PCINT0_vect)	     
+{			     
+	// do nothing, just wake up.
 }
-*/
+
 
 // this one is needed as watchdog wakeup routine. Removing this will not work.
 ISR(WDT_vect)
