@@ -186,14 +186,8 @@ ISR(PCINT0_vect)
 }
 
 
-// this one is needed as watchdog wakeup routine. Removing this will not work.
+/* this one is needed as watchdog wakeup routine. Removing this will not work */
 ISR(WDT_vect)
 {
-//	sleep_disable();          // Disable Sleep on Wakeup
-//	wdt_disable();
-	//PORTB = 0b00000000;
-//	_delay_ms(5000);
-	// Your code goes here...
-	// Whatever needs to happen every 1 second
-	//sleep_enable();           // Enable Sleep Mode
+	/* do nothing */
 }
