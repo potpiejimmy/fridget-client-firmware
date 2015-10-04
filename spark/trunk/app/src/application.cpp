@@ -172,12 +172,14 @@ void loop()
 #endif
         _DEBUG("Core up.");
         
+#ifdef ATTINY_CONTROLLED_POWER
         /* if ATTINY_CLK is high, we are in switch image mode */
         if (digitalRead(ATTINY_CLK) == HIGH)
         {
             userState = USER_STATE_SWITCH_IMAGE;
             break;
         }
+#endif
         
         execLen = EEPROM.read(EEPROM_ENTRY_PROGRAM_LENGTH);
         execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER);
