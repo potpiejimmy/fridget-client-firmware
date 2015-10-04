@@ -160,6 +160,8 @@ int main(void)
 
 		/* and set back the button pressed variable to false */
 		g_buttonPressed = 0;
+		/* set PINB4 to LOW (leave switch image mode) */
+		PORTB &= 0b11101111;
 		
 		/* now we also wait for PinB1 which is the busy pin of the spectra display */
 		while (PINB & (1 << PINB1))
@@ -181,7 +183,7 @@ ISR(PCINT0_vect)
 {			     
 	/* set the button pressed variable to true */
 	g_buttonPressed = 1;
-	/* set PINB4 to HIGH to let the spark/photon know that we woke up from button press */
+	/* set PINB4 to HIGH to let the spark/photon know that we woke up from button press (switch image mode) */
 	PORTB |= (1<<PINB4);
 }
 
