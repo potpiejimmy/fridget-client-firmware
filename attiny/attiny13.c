@@ -17,6 +17,8 @@
 
 /* global variable to decide if button was pressed when waking up */
 volatile int g_buttonPressed;
+/* global variable that holds the number of cycles to sleep in SleepLong method */
+volatile uint16_t g_cyclesToSleep;
 
 /* initialize the watchdog */
 void wdt_init(uint8_t timeout) {
@@ -46,7 +48,7 @@ void sleep_now() {
 	wdt_disable();
 }
 
-void SleepLong(uint16_t cycles)
+void SleepLong()
 {
 	/* sleep the number of given cycles
 	   long-time tests showed that one sleep takes approx. 8.408 seconds
@@ -58,20 +60,24 @@ void SleepLong(uint16_t cycles)
 	PCMSK = (1<<PCINT0);
 	
 	/* go to sleep for the number of cycles given by spark/photon */
-	for (uint16_t i=0 ; i<cycles; i++)
+	for (uint16_t i=0 ; i<g_cyclesToSleep; i++)
 	{
 		/* initialize the watchdog */
 		wdt_init(WDTO_8S);
 		/* and sleep */
 		sleep_now();
-		/* if woke up by button press, then leave sleep loop */
-		if (g_buttonPressed) break;
+		/* if woke up by button press, then remember remaining cycles and leave sleep loop */
+		if (g_buttonPressed) 
+		{
+			/* set sleep time to remaining cycles minus 2 (~16s for display update time) */
+			g_cyclesToSleep = g_cyclesToSleep-i-2;
+			/* leave the for loop */
+			break;
+		}
 	}
 	
 	/* disable interrupts on pin */
 	PCMSK = 0b00000000;
-	/* and set back the button pressed variable to false */
-	g_buttonPressed = 0;
 }
 
 /* Get the number of sleep cycles from spark/photon */
@@ -126,6 +132,7 @@ int main(void)
 	
 	/* initialize the button pressed variable with false */
 	g_buttonPressed = 0;
+	g_cyclesToSleep = 0;
 
 	/* disable power and wait three seconds to ensure stable start of LDO and spark after three seconds
 	   this time can surely be reduced, but it will only play a role after plugging system to battery */
@@ -147,8 +154,12 @@ int main(void)
 			wdt_init(WDTO_250MS);
 			sleep_now();
 		}
-		/* ok, spark has finished, now get sleep time */
-		uint16_t timeToSleep = GetSleepTimeFromSpark();		
+		/* ok, spark has finished, now get sleep time if in normal mode */
+		if (!g_buttonPressed)
+			g_cyclesToSleep = GetSleepTimeFromSpark();		
+
+		/* and set back the button pressed variable to false */
+		g_buttonPressed = 0;
 		
 		/* now we also wait for PinB1 which is the busy pin of the spectra display */
 		while (PINB & (1 << PINB1))
@@ -161,7 +172,7 @@ int main(void)
 		PORTB &= 0b11111011;  // disable LDO power
 	
 		/* and wait long time till next spark action... */
-		SleepLong(timeToSleep);
+		SleepLong();
     }
 }
 
@@ -170,6 +181,8 @@ ISR(PCINT0_vect)
 {			     
 	/* set the button pressed variable to true */
 	g_buttonPressed = 1;
+	/* set PINB4 to HIGH to let the spark/photon know that we woke up from button press */
+	PORTB |= (1<<PINB4);
 }
 
 
