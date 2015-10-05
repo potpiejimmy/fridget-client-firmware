@@ -473,16 +473,17 @@ void powerDown(uint16_t interval)
     userState = USER_STATE_IDLE;
     _DEBUG("State: USER_STATE_IDLE");
     
+    // perform bit-banging with Attiny.
+    // ATTINY_DATA_BUSY as Data (Attiny input, Spark output)
+    // ATTINY_CLK as CLK (Attiny output, Spark input)
+    const int MAXBIT = 0x8000; // highest bit to start with
+    int clk = digitalRead(ATTINY_CLK); // initial value of CLK
+    // Notify Attiny about start of bit-banging by setting busy to LOW
+    digitalWrite(ATTINY_DATA_BUSY, LOW);
+
     /* skip bit banging if we are in Switch Image mode */
     if(digitalRead(ATTINY_CLK) == LOW)
     {
-        // perform bit-banging with Attiny.
-        // ATTINY_DATA_BUSY as Data (Attiny input, Spark output)
-        // ATTINY_CLK as CLK (Attiny output, Spark input)
-        const int MAXBIT = 0x8000; // highest bit to start with
-        int clk = digitalRead(ATTINY_CLK); // initial value of CLK
-        // Notify Attiny about start of bit-banging by setting busy to LOW
-        digitalWrite(ATTINY_DATA_BUSY, LOW);
         for (int i=MAXBIT; i>0; i>>=1) {
             // wait for first clock toggle
             while (digitalRead(ATTINY_CLK) == clk) delayRealMicros(1000);
