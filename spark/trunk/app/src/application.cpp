@@ -202,13 +202,15 @@ void loop()
         break;
         
     case USER_STATE_SWITCH_IMAGE:
-        /* perform image switching operation */
+        /* we just switch to next image without increasing program counter */
         
-        /* for now, we simply go to last operation in program (skip to last) */
-        if (EEPROM.read(EEPROM_ENTRY_PROGRAM_LENGTH)>=5) {
-            EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, EEPROM.read(EEPROM_ENTRY_PROGRAM_LENGTH)-5);
-            executeOp();
-        }
+        /* for now we simply go back one step in program and repeat the last step */
+        execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER);
+        
+        if (execNo>=5)
+            EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, execNo-5);
+        executeOp();
+            
         break;
 
     case USER_STATE_CONNECTING:
