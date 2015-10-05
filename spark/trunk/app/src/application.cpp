@@ -174,8 +174,7 @@ void loop()
         
 #ifdef ATTINY_CONTROLLED_POWER
         /* if ATTINY_CLK is high, we are in switch image mode */
-        if (digitalRead(ATTINY_CLK) == HIGH)
-        {
+        if (digitalRead(ATTINY_CLK) == HIGH) {
             userState = USER_STATE_SWITCH_IMAGE;
             break;
         }
@@ -203,15 +202,13 @@ void loop()
         break;
         
     case USER_STATE_SWITCH_IMAGE:
-        /* we just switch to next image without increasing program counter */
+        /* perform image switching operation */
         
-        /* for now we simply go back one step in program and repeat the last step */
-        execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER);
-        
-        if (execNo>0)
-            EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, execNo-1);
-        executeOp();
-            
+        /* for now, we simply go to last operation in program (skip to last) */
+        if (EEPROM.read(EEPROM_ENTRY_PROGRAM_LENGTH)>=5) {
+            EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, EEPROM.read(EEPROM_ENTRY_PROGRAM_LENGTH)-5);
+            executeOp();
+        }
         break;
 
     case USER_STATE_CONNECTING:
