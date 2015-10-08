@@ -178,13 +178,14 @@ int main(void)
     }
 }
 
-
+/* Interrupt routine executed when button is pressed */
 ISR(PCINT0_vect)	     
 {			     
 	/* set the button pressed variable to true */
 	g_buttonPressed = 1;
 	/* set PINB4 to HIGH to let the spark/photon know that we woke up from button press (switch image mode) */
 	PORTB |= (1<<PINB4);
+        /* now wait till button is released. If this takes more than a second, we are in Go Online mode /*
 }
 
 
