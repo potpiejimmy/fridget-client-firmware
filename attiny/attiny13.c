@@ -21,7 +21,7 @@
 /* switch image, i.e. the user has pressed the button so the system should wake up to switch image */
 #define WAKEUP_MODE_SWITCHIMAGE 1
 /* go online, i.e. the user has pressed button longer than 1s and the spark/photon shall wake up and go online immediately */
-#define WAKEUP_MODE_GOONLINE 2
+#define WAKEUP_MODE_GOONLINE 3
 
 /* holds the information in which mode the system woke up */
 volatile int g_wakeupMode;
@@ -117,6 +117,17 @@ uint16_t GetSleepTimeFromSpark()
 	return retval;
 }
 
+/* transfers the wake up mode to spark/photon via bitbanging using same pins as GetSleepTimeFromSpark */
+void TransferWakeUpModeToSpark()
+{
+	/* first we set the very first bit already: if mode = 1 or 3, the last bit is set = button pressed */
+	PORTB |= ((g_wakeupMode & 1)<<PINB4);
+	/* now wait till spark/photon is ready, i.e. PINB3 goes to high */
+	while (PINB & (1 << PINB3) == 0);
+	/* ...and set second bit */
+	PORTB |= ((g_wakeupMode & 0b10)<<PINB4);
+}
+
 /* enables the interrupts on pin0 */
 /* pin0 is used to wake up attiny from sleep mode by button */
 /* internal pull-up will set level to HIGH. Button will connect to GND and */
@@ -155,9 +166,8 @@ int main(void)
     {
 		/* turn on the LDO which will power the Spark */
 		PORTB |= (1<<PINB2); 
-		/* give Spark 1.5 seonds to start and wait for PinB3 which is the busy pin of the spark */
-		// 2015-08-14 Wolf: changed from 1.5s to 2.5s since with photon sometime it did not work
-		_delay_ms(2500);
+		/* transfer wake up mode to spark/photon */
+		TransferWakeUpModeToSpark();
 		/* wait till spark/photon puts PINB3=D1 to low */
 		while (PINB & (1 << PINB3))
 		{
