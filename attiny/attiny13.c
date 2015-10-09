@@ -76,7 +76,7 @@ void SleepLong()
 		/* and sleep */
 		sleep_now();
 		/* if woke up by button press, then remember remaining cycles and leave sleep loop */
-		if (g_buttonPressed) 
+		if (g_wakeupMode == WAKEUP_MODE_SWITCHIMAGE) 
 		{
 			/* set sleep time to remaining cycles minus 2 (~16s for display update time) */
 			g_cyclesToSleep = g_cyclesToSleep-i-2;
@@ -139,8 +139,9 @@ int main(void)
 	   define port PB4 as CLK output for serial communication with Spark */
 	DDRB=0b00010100;
 	
-	/* initialize the button pressed variable with false */
-	g_buttonPressed = 0;
+	/* initialize the wake up mode with 0 = next step mode */
+	g_wakeupMode = WAKEUP_MODE_NEXTSTEP;
+	/* initialize the sleep cycles with zero */
 	g_cyclesToSleep = 0;
 
 	/* disable power and wait three seconds to ensure stable start of LDO and spark after three seconds
@@ -163,14 +164,14 @@ int main(void)
 			wdt_init(WDTO_250MS);
 			sleep_now();
 		}
-		/* ok, spark has finished, now get sleep time if in normal mode */
-		if (!g_buttonPressed)
+		/* ok, spark has finished, now get sleep time if in normal or online mode */
+		if (g_wakeupMode <> WAKEUP_MODE_SWITCHIMAGE)
 			g_cyclesToSleep = GetSleepTimeFromSpark();		
 
 		/* and set back the button pressed variable to false */
-		g_buttonPressed = 0;
+		g_wakeupMode = WAKEUP_MODE_NEXTSTEP;
 		/* set PINB4 to LOW (leave switch image mode) */
-		PORTB &= 0b11101111;
+		//PORTB &= 0b11101111;
 		
 		/* now we also wait for PinB1 which is the busy pin of the spectra display */
 		while (PINB & (1 << PINB1))
