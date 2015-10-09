@@ -15,8 +15,17 @@
 #include <avr/wdt.h>
 //#include <avr/power.h>
 
-/* global variable to decide if button was pressed when waking up */
-volatile int g_buttonPressed;
+/* define the wake up modes */
+/* next step mode, i.e. the wait time has expired and the photon/spark should execute next program step */
+#define WAKEUP_MODE_NEXTSTEP 0
+/* switch image, i.e. the user has pressed the button so the system should wake up to switch image */
+#define WAKEUP_MODE_SWITCHIMAGE 1
+/* go online, i.e. the user has pressed button longer than 1s and the spark/photon shall wake up and go online immediately */
+#define WAKEUP_MODE_GOONLINE 2
+
+/* holds the information in which mode the system woke up */
+volatile int g_wakeupMode;
+
 /* global variable that holds the number of cycles to sleep in SleepLong method */
 volatile uint16_t g_cyclesToSleep;
 
@@ -182,10 +191,20 @@ int main(void)
 ISR(PCINT0_vect)	     
 {			     
 	/* set the button pressed variable to true */
-	g_buttonPressed = 1;
+	g_wakeupMode = WAKEUP_MODE_SWITCHIMAGE;
 	/* set PINB4 to HIGH to let the spark/photon know that we woke up from button press (switch image mode) */
-	PORTB |= (1<<PINB4);
+	//PORTB |= (1<<PINB4);
         /* now wait till button is released. If this takes more than a second, we are in Go Online mode /*
+	/* count the number of 100ms wait time */
+	int i = 0;
+        while (PINB & 1)
+        {
+            _delay_ms(100);
+            i++;
+        }
+        /* if we waited more than 10 times 100ms, i.e. one second, we are on Go Online mode */
+        if (i>=10)
+            g_wakeupMode = WAKEUP_MODE_GOONLINE;
 }
 
 
