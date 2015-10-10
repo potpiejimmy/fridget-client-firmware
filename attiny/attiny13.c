@@ -124,8 +124,8 @@ void TransferWakeUpModeToSpark()
 	PORTB |= ((g_wakeupMode & 1)<<PINB4);
 	/* now wait till spark/photon is ready, i.e. PINB3 goes to high */
 	while (PINB & (1 << PINB3) == 0);
-	/* ...and set second bit, which will be high if mode = 3 = go online mode */
-	PORTB |= ((g_wakeupMode & 0b10)<<PINB4);
+	/* ...and set second bit, which will be high if mode = 2 = go online mode */
+	PORTB |= (((g_wakeupMode>>1) & 1)<<PINB4);
 }
 
 /* enables the interrupts on pin0 */
@@ -201,10 +201,9 @@ int main(void)
 /* Interrupt routine executed when button is pressed */
 ISR(PCINT0_vect)	     
 {			     
-	/* set the button pressed variable to true */
+	/* set the wake up mode to switch image */
 	g_wakeupMode = WAKEUP_MODE_SWITCHIMAGE;
-	/* set PINB4 to HIGH to let the spark/photon know that we woke up from button press (switch image mode) */
-	//PORTB |= (1<<PINB4);
+
         /* now wait till button is released. If this takes more than a second, we are in Go Online mode /*
 	/* count the number of 100ms wait time */
 	int i = 0;
