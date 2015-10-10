@@ -207,7 +207,7 @@ ISR(PCINT0_vect)
         /* now wait till button is released. If this takes more than a second, we are in Go Online mode /*
 	/* count the number of 100ms wait time */
 	int i = 0;
-        while (PINB & 1)
+        while (!(PINB & 1))
         {
             _delay_ms(100);
             i++;
