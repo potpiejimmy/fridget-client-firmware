@@ -45,6 +45,7 @@
 #define USER_STATE_IDLE                   5
 #define USER_STATE_FACTORY_RESET          6
 #define USER_STATE_SWITCH_IMAGE           7
+#define USER_STATE_GO_ONLINE              8
 
 // connect modes (cloud on/off)
 #define USER_CONNECT_MODE_CLOUD_ON   1
@@ -139,9 +140,6 @@ void setup()
     pinMode(ATTINY_DATA_BUSY, OUTPUT); // Time Interval Bit DATA
     pinMode(ATTINY_CLK, INPUT);  // Time Interval Bit CLK (IN)
     
-    /* Activate ATTINY_DATA_BUSY for Attiny notification busy output */
-    digitalWrite(ATTINY_DATA_BUSY, HIGH);
-    
     /* External flash pins*/
     pinMode(LLFLASH_CS, OUTPUT);    // External flash CS
     pinMode(LLFLASH_HOLD, OUTPUT);  // External flash HOLD
@@ -171,30 +169,35 @@ void loop()
         }
 #endif
         _DEBUG("Core up.");
-        
+
 #ifdef ATTINY_CONTROLLED_POWER
-        /* if ATTINY_CLK is high, we are in switch image mode */
-        if (digitalRead(ATTINY_CLK) == HIGH) {
-            userState = USER_STATE_SWITCH_IMAGE;
-            break;
-        }
+    /* get wake up mode from Attiny */
+    /* get first bit directly from CLK input, which is the switchImage bit */
+    bool switchImage = digitalRead(ATTINY_CLK) == HIGH; 
+    /* Now activate ATTINY_DATA_BUSY for Attiny notification busy output.
+       This will trigger Attiny to send second bit for wake up mode, which is the goOnline bit */
+    digitalWrite(ATTINY_DATA_BUSY, HIGH);
+    /* give little time for Attiny to set the CLK pin */
+    delayRealMicros(3000);
+    /* read second bit */
+    bool goOnline = digitalRead(ATTINY_CLK) == HIGH;
+
+    if (switchImage) {
+        userState = USER_STATE_SWITCH_IMAGE;
+        break;
+    }
+    
+    if (goOnline) {
+        userState = USER_STATE_GO_ONLINE;
+        break;
+    }
 #endif
         
         execLen = EEPROM.read(EEPROM_ENTRY_PROGRAM_LENGTH);
         execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER);
         _DEBUG(String("ExecLen=")+execLen+", ExecNo="+execNo);
         if (execNo >= execLen) {
-            // connect to WiFi:
-            WiFi.connect();
-            userState = USER_STATE_CONNECTING;
-            _DEBUG("State: USER_STATE_CONNECTING");
-            connectingStartTs = millis();
-            if (!WiFi.hasCredentials()) {
-                // Note: if no credentials are available, the loop function
-                // won't be called until smart config process completed, so
-                // we have to update the display now:
-                updateDisplay(1, true); // show setup image (B))
-            }
+            userState = USER_STATE_GO_ONLINE;
         } else {
             // execute next program step:
             executeOp();
@@ -211,6 +214,20 @@ void loop()
             EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, execNo-5);
         executeOp();
             
+        break;
+        
+    case USER_STATE_GO_ONLINE:
+        // connect to WiFi:
+        WiFi.connect();
+        userState = USER_STATE_CONNECTING;
+        _DEBUG("State: USER_STATE_CONNECTING");
+        connectingStartTs = millis();
+        if (!WiFi.hasCredentials()) {
+            // Note: if no credentials are available, the loop function
+            // won't be called until smart config process completed, so
+            // we have to update the display now:
+            updateDisplay(1, true); // show setup image (B))
+        }
         break;
 
     case USER_STATE_CONNECTING:
@@ -470,9 +487,6 @@ void powerDown(uint16_t interval)
     _DEBUG(StringSumHelper("Going to sleep with sleep interval #") + interval);
     
 #ifdef ATTINY_CONTROLLED_POWER
-    userState = USER_STATE_IDLE;
-    _DEBUG("State: USER_STATE_IDLE");
-    
     // perform bit-banging with Attiny.
     // ATTINY_DATA_BUSY as Data (Attiny input, Spark output)
     // ATTINY_CLK as CLK (Attiny output, Spark input)
@@ -482,7 +496,7 @@ void powerDown(uint16_t interval)
     digitalWrite(ATTINY_DATA_BUSY, LOW);
 
     /* skip bit banging if we are in Switch Image mode */
-    if(digitalRead(ATTINY_CLK) == LOW)
+    if(userState <> USER_STATE_SWITCH_IMAGE)
     {
         for (int i=MAXBIT; i>0; i>>=1) {
             // wait for first clock toggle
@@ -494,6 +508,11 @@ void powerDown(uint16_t interval)
         // and wait for final clk toggle to make sure that last bit is read by attiny before powering down
         while (digitalRead(ATTINY_CLK) == clk) delayRealMicros(1000);
     }
+
+    /* set user state back to idle */
+    userState = USER_STATE_IDLE;
+    _DEBUG("State: USER_STATE_IDLE");
+    
     PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 #else
 #ifdef _SERIAL_DEBUGGING_
