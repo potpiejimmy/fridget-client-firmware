@@ -21,7 +21,7 @@
 /* switch image, i.e. the user has pressed the button so the system should wake up to switch image */
 #define WAKEUP_MODE_SWITCHIMAGE 1
 /* go online, i.e. the user has pressed button longer than 1s and the spark/photon shall wake up and go online immediately */
-#define WAKEUP_MODE_GOONLINE 3
+#define WAKEUP_MODE_GOONLINE 2
 
 /* holds the information in which mode the system woke up */
 volatile int g_wakeupMode;
@@ -120,11 +120,11 @@ uint16_t GetSleepTimeFromSpark()
 /* transfers the wake up mode to spark/photon via bitbanging using same pins as GetSleepTimeFromSpark */
 void TransferWakeUpModeToSpark()
 {
-	/* first we set the very first bit already: if mode = 1 or 3, the last bit is set = button pressed */
+	/* first we set the very first bit already: if mode = 1, the last bit is set = switch image mode */
 	PORTB |= ((g_wakeupMode & 1)<<PINB4);
 	/* now wait till spark/photon is ready, i.e. PINB3 goes to high */
 	while (PINB & (1 << PINB3) == 0);
-	/* ...and set second bit */
+	/* ...and set second bit, which will be high if mode = 3 = go online mode */
 	PORTB |= ((g_wakeupMode & 0b10)<<PINB4);
 }
 
