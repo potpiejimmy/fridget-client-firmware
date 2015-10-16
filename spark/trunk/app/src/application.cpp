@@ -38,14 +38,14 @@
 
 // user states
 #define USER_STATE_OFFLINE                0
-#define USER_STATE_CONNECTING             1
-#define USER_STATE_CONNECTED_AWAITING_IP  2
-#define USER_STATE_ONLINE                 3
-#define USER_STATE_ONLINE_WITH_CLOUD      4
-#define USER_STATE_IDLE                   5
-#define USER_STATE_FACTORY_RESET          6
-#define USER_STATE_SWITCH_IMAGE           7
-#define USER_STATE_GO_ONLINE              8
+#define USER_STATE_CONNECT                1
+#define USER_STATE_CONNECTING             2
+#define USER_STATE_CONNECTED_AWAITING_IP  3
+#define USER_STATE_ONLINE                 4
+#define USER_STATE_ONLINE_WITH_CLOUD      5
+#define USER_STATE_IDLE                   6
+#define USER_STATE_FACTORY_RESET          7
+#define USER_STATE_SWITCH_IMAGE           8
 
 // connect modes (cloud on/off)
 #define USER_CONNECT_MODE_CLOUD_ON   1
@@ -64,8 +64,9 @@
 /* EEPROM entries */
 #define EEPROM_ENTRY_PROGRAM_LENGTH  0
 #define EEPROM_ENTRY_PROGRAM_COUNTER 1
-#define EEPROM_ENTRY_ERROR_COUNTER   2
-#define EEPROM_ENTRY_PROGRAM_START   3
+#define EEPROM_ENTRY_PROGRAM_SUBSTEP 2
+#define EEPROM_ENTRY_ERROR_COUNTER   3
+#define EEPROM_ENTRY_PROGRAM_START   4
 
 /* WIFI connect time out (ms) */
 #define WIFI_CONNECT_TIMEOUT 20000
@@ -157,9 +158,9 @@ void loop()
 {
     uint8_t execLen;
     uint8_t execNo;
+    uint8_t subStepCount;
 	
-    bool switchImage;
-    bool goOnline;
+    bool wakeupModeSwitchImage;
     
     switch (userState)
     {
@@ -176,31 +177,39 @@ void loop()
 #ifdef ATTINY_CONTROLLED_POWER
         /* get wake up mode from Attiny */
         /* get first bit directly from CLK input, which is the switchImage bit */
-        switchImage = digitalRead(ATTINY_CLK) == HIGH; 
+        wakeupModeSwitchImage = digitalRead(ATTINY_CLK) == HIGH; 
         /* Now activate ATTINY_DATA_BUSY for Attiny notification busy output.
            This will trigger Attiny to send second bit for wake up mode, which is the goOnline bit */
         digitalWrite(ATTINY_DATA_BUSY, HIGH);
+        
+        if (wakeupModeSwitchImage) {
+            userState = USER_STATE_SWITCH_IMAGE;
+            return;
+        }
         /* give little time for Attiny to set the CLK pin */
         delayRealMicros(3000);
         /* read second bit */
-        goOnline = digitalRead(ATTINY_CLK) == HIGH;
-
-        if (switchImage) {
-            userState = USER_STATE_SWITCH_IMAGE;
-            break;
-        }
-
-        if (goOnline) {
-            userState = USER_STATE_GO_ONLINE;
-            break;
+        if (digitalRead(ATTINY_CLK) == HIGH) {
+            userState = USER_STATE_CONNECT;
+            return;
         }
 #endif
         
+        // Normal wakeup, execute next program step
         execLen = EEPROM.read(EEPROM_ENTRY_PROGRAM_LENGTH);
         execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER);
+        
+        // go to next OP (increase program counter))
+        subStepCount = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo);
+        execNo += subStepCount + 5;
+
+        _DEBUG(String("Increasing execNo to ") + execNo);
+        EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, execNo);
+        EEPROM.write(EEPROM_ENTRY_PROGRAM_SUBSTEP, (uint8_t)0); // reset substep counter
+        
         _DEBUG(String("ExecLen=")+execLen+", ExecNo="+execNo);
         if (execNo >= execLen) {
-            userState = USER_STATE_GO_ONLINE;
+            userState = USER_STATE_CONNECT;
         } else {
             // execute next program step:
             executeOp();
@@ -208,18 +217,11 @@ void loop()
         break;
         
     case USER_STATE_SWITCH_IMAGE:
-        /* we just switch to next image without increasing program counter */
-        
-        /* for now we simply go back one step in program and repeat the last step */
-        execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER);
-        
-        if (execNo>=5)
-            EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, execNo-5);
+        /* we just execute next image OP without increasing program counter */
         executeOp();
-            
         break;
         
-    case USER_STATE_GO_ONLINE:
+    case USER_STATE_CONNECT:
         // connect to WiFi:
         WiFi.connect();
         userState = USER_STATE_CONNECTING;
@@ -388,35 +390,45 @@ void onOnline()
     // FOR DEBUGGING VOLTAGE ONLY:
     reportVoltageToServer();
     
-    const char* program = getServerParam("exec", "A0000");
+    const char* program = getServerParam("exec", "1A0000");
     uint8_t programSize = strlen(program);
     _DEBUG(String("Received program: ") + program);
  
     EEPROM.write(EEPROM_ENTRY_PROGRAM_LENGTH, (uint8_t)programSize);
-    EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, (uint8_t)0); // program counter
-    //EEPROM.write(EEPROM_ENTRY_RESERVED, (uint8_t)0); // reset image no.
+    EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, (uint8_t)0); // reset program counter
+    EEPROM.write(EEPROM_ENTRY_PROGRAM_SUBSTEP, (uint8_t)0); // reset substep counter
     for (int i=0; i<programSize; i++) EEPROM.write(EEPROM_ENTRY_PROGRAM_START+i, program[i]);
 }
 
 void executeOp()
 {
     uint8_t execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER); // program counter
-    char opName = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo);
-    _DEBUG(String("Execute OP ") + opName);
-    
-    // for now, only '-' (NOOP) or 'A-Z' (IMG UDPATE) allowed)
-    if (opName >= 'A') updateDisplay(opName - 'A', false);
-    
+    uint8_t subStepCount = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo);
+    uint8_t subStepNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_SUBSTEP);
     execNo++;
+    
+    if (subStepCount>0) {
+        // execute next substep
+        char opName = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo+subStepNo);
+        _DEBUG(String("Execute OP ") + opName);
+    
+        updateDisplay(opName - 'A', false);
+    
+        subStepNo++;
+        if (subStepNo >= subStepCount) subStepNo = 0;
+        
+        _DEBUG(String("Next substep is ") + subStepNo);
+        EEPROM.write(EEPROM_ENTRY_PROGRAM_SUBSTEP, subStepNo);
+    } else {
+        _DEBUG("Execute NOOP");
+    }
+    execNo += subStepCount;
     
     // OP done, now powering down:
     char interval_s[5]; interval_s[4] = 0;
     for (int i=0; i<4; i++) interval_s[i] = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+(execNo++));
     unsigned long interval = strtoul(interval_s, 0, 16);
     _DEBUG(String("Execute Sleep interval ") + interval);
-    
-    _DEBUG(String("Increasing execNo to ") + execNo);
-    EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, execNo);
     
     powerDown((uint16_t)interval);
 }
