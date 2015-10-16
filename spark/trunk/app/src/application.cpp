@@ -158,8 +158,8 @@ void loop()
     uint8_t execLen;
     uint8_t execNo;
 	
-	bool switchImage;
-	bool goOnline;
+    bool switchImage;
+    bool goOnline;
     
     switch (userState)
     {
@@ -174,26 +174,26 @@ void loop()
         _DEBUG("Core up.");
 
 #ifdef ATTINY_CONTROLLED_POWER
-    /* get wake up mode from Attiny */
-    /* get first bit directly from CLK input, which is the switchImage bit */
-    switchImage = digitalRead(ATTINY_CLK) == HIGH; 
-    /* Now activate ATTINY_DATA_BUSY for Attiny notification busy output.
-       This will trigger Attiny to send second bit for wake up mode, which is the goOnline bit */
-    digitalWrite(ATTINY_DATA_BUSY, HIGH);
-    /* give little time for Attiny to set the CLK pin */
-    delayRealMicros(3000);
-    /* read second bit */
-    goOnline = digitalRead(ATTINY_CLK) == HIGH;
+        /* get wake up mode from Attiny */
+        /* get first bit directly from CLK input, which is the switchImage bit */
+        switchImage = digitalRead(ATTINY_CLK) == HIGH; 
+        /* Now activate ATTINY_DATA_BUSY for Attiny notification busy output.
+           This will trigger Attiny to send second bit for wake up mode, which is the goOnline bit */
+        digitalWrite(ATTINY_DATA_BUSY, HIGH);
+        /* give little time for Attiny to set the CLK pin */
+        delayRealMicros(3000);
+        /* read second bit */
+        goOnline = digitalRead(ATTINY_CLK) == HIGH;
 
-    if (switchImage) {
-        userState = USER_STATE_SWITCH_IMAGE;
-        break;
-    }
-    
-    if (goOnline) {
-        userState = USER_STATE_GO_ONLINE;
-        break;
-    }
+        if (switchImage) {
+            userState = USER_STATE_SWITCH_IMAGE;
+            break;
+        }
+
+        if (goOnline) {
+            userState = USER_STATE_GO_ONLINE;
+            break;
+        }
 #endif
         
         execLen = EEPROM.read(EEPROM_ENTRY_PROGRAM_LENGTH);

@@ -71,7 +71,7 @@
 using namespace spark;
 
 // Firmware version
-#define FRIDGET_FIRMWARE_VERSION "2.34"
+#define FRIDGET_FIRMWARE_VERSION "2.35"
 
 // SERIAL DEBUGGING - if you enable this, you must connect via 9600 8N1 terminal
 // and hit any key so that the core can start up
