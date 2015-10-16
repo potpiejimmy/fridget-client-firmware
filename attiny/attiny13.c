@@ -76,7 +76,7 @@ void SleepLong()
 		/* and sleep */
 		sleep_now();
 		/* if woke up by button press, then remember remaining cycles and leave sleep loop */
-		if (g_wakeupMode <> WAKEUP_MODE_NEXTSTEP) 
+		if (g_wakeupMode != WAKEUP_MODE_NEXTSTEP) 
 		{
 			/* set sleep time to remaining cycles minus 2 (~16s for display update time) */
 			g_cyclesToSleep = g_cyclesToSleep-i-2;
@@ -175,7 +175,7 @@ int main(void)
 			sleep_now();
 		}
 		/* ok, spark has finished, now get sleep time if in normal or online mode */
-		if (g_wakeupMode <> WAKEUP_MODE_SWITCHIMAGE)
+		if (g_wakeupMode != WAKEUP_MODE_SWITCHIMAGE)
 			g_cyclesToSleep = GetSleepTimeFromSpark();		
 
 		/* and set back the button pressed variable to false */
