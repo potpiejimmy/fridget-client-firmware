@@ -157,6 +157,9 @@ void loop()
 {
     uint8_t execLen;
     uint8_t execNo;
+	
+	bool switchImage;
+	bool goOnline;
     
     switch (userState)
     {
@@ -173,14 +176,14 @@ void loop()
 #ifdef ATTINY_CONTROLLED_POWER
     /* get wake up mode from Attiny */
     /* get first bit directly from CLK input, which is the switchImage bit */
-    bool switchImage = digitalRead(ATTINY_CLK) == HIGH; 
+    switchImage = digitalRead(ATTINY_CLK) == HIGH; 
     /* Now activate ATTINY_DATA_BUSY for Attiny notification busy output.
        This will trigger Attiny to send second bit for wake up mode, which is the goOnline bit */
     digitalWrite(ATTINY_DATA_BUSY, HIGH);
     /* give little time for Attiny to set the CLK pin */
     delayRealMicros(3000);
     /* read second bit */
-    bool goOnline = digitalRead(ATTINY_CLK) == HIGH;
+    goOnline = digitalRead(ATTINY_CLK) == HIGH;
 
     if (switchImage) {
         userState = USER_STATE_SWITCH_IMAGE;
@@ -496,7 +499,7 @@ void powerDown(uint16_t interval)
     digitalWrite(ATTINY_DATA_BUSY, LOW);
 
     /* skip bit banging if we are in Switch Image mode */
-    if(userState <> USER_STATE_SWITCH_IMAGE)
+    if(userState != USER_STATE_SWITCH_IMAGE)
     {
         for (int i=MAXBIT; i>0; i>>=1) {
             // wait for first clock toggle
