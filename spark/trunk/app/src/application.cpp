@@ -200,7 +200,7 @@ void loop()
         execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER);
         
         // go to next OP (increase program counter))
-        subStepCount = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo);
+        subStepCount = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo) - '0';
         execNo += subStepCount + 5;
 
         _DEBUG(String("Increasing execNo to ") + execNo);
@@ -403,7 +403,7 @@ void onOnline()
 void executeOp()
 {
     uint8_t execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER); // program counter
-    uint8_t subStepCount = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo);
+    uint8_t subStepCount = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo) - '0';
     uint8_t subStepNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_SUBSTEP);
     execNo++;
     
