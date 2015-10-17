@@ -29,6 +29,10 @@ volatile int g_wakeupMode;
 /* global variable that holds the number of cycles to sleep in SleepLong method */
 volatile uint16_t g_cyclesToSleep;
 
+/* global boolean variable saying if currently a button interrupt is running (button was pressed) */
+volatile int g_interuptRunning;
+
+
 /* initialize the watchdog */
 void wdt_init(uint8_t timeout) {
 	/* globally disable all interrupts */
@@ -57,16 +61,18 @@ void sleep_now() {
 	wdt_disable();
 }
 
+/* sleep the number of given cycles
+	long-time tests showed that one sleep takes approx. 8.408 seconds
+	we do not know if the difference to exactly 8 seconds is caused
+	by inexactness of watchdog oscillator and/or by time needed for waking
+	up and going to sleep again */
 void SleepLong()
 {
-	/* sleep the number of given cycles
-	   long-time tests showed that one sleep takes approx. 8.408 seconds
-	   we do not know if the difference to exactly 8 seconds is caused
-	   by inexactness of watchdog oscillator and/or by time needed for waking
-	   up and going to sleep again */
-
 	/* enable pin change interrupt on pin pcint0 only */
 	PCMSK = (1<<PCINT0);
+	
+	/* for safety: if number of cycles is <= 0, we set to 1. Otherwise the power will be turned off and immediately on (bad). */
+	if (g_cyclesToSleep <= 0) g_cyclesToSleep = 1;
 	
 	/* go to sleep for the number of cycles given by spark/photon */
 	for (uint16_t i=0 ; i<g_cyclesToSleep; i++)
@@ -84,9 +90,11 @@ void SleepLong()
 			break;
 		}
 	}
-	
+
 	/* disable interrupts on pin */
 	PCMSK = 0b00000000;
+	/* interrupt (if there was one), is now handled */
+	g_interuptRunning = 0;
 }
 
 /* Get the number of sleep cycles from spark/photon */
@@ -121,12 +129,14 @@ uint16_t GetSleepTimeFromSpark()
 void TransferWakeUpModeToSpark()
 {
 	/* first we set the very first bit already: if mode = 1, the last bit is set = switch image mode */
-	PORTB |= ((g_wakeupMode & 1)<<PINB4);
+	/* remark: I used PINB first instead of PORTB on right side. That does not work. PINB only holds the input values. */
+	PORTB = (PORTB & 0b11101111) | ((g_wakeupMode & 1)<<PINB4);
 	/* now wait till spark/photon is ready, i.e. PINB3 goes to high */
-	while (PINB & (1 << PINB3) == 0);
+	while ((PINB & (1 << PINB3)) == 0) {}
 	/* ...and set second bit, which will be high if mode = 2 = go online mode */
-	PORTB |= (((g_wakeupMode>>1) & 1)<<PINB4);
+	PORTB = (PORTB & 0b11101111) | (((g_wakeupMode>>1) & 1)<<PINB4);
 }
+
 
 /* enables the interrupts on pin0 */
 /* pin0 is used to wake up attiny from sleep mode by button */
@@ -155,11 +165,15 @@ int main(void)
 	/* initialize the sleep cycles with zero */
 	g_cyclesToSleep = 0;
 
+	/* initialize to 0, no interrupt running */
+	g_interuptRunning = 0;
+	
 	/* disable power and wait three seconds to ensure stable start of LDO and spark after three seconds
 	   this time can surely be reduced, but it will only play a role after plugging system to battery */
 	PORTB = 0b00000000;  // disable LDO power and set all ports to LOW
 	_delay_ms(3000);
 	
+	/* globally enable once the interrupts on pin 0 for button feature */
 	EnablePinChangeInterrupt();
 
     while(1)
@@ -168,7 +182,7 @@ int main(void)
 		PORTB |= (1<<PINB2); 
 		/* transfer wake up mode to spark/photon */
 		TransferWakeUpModeToSpark();
-		/* wait till spark/photon puts PINB3=D1 to low */
+		/* wait till spark/photon puts PINB3=D0 to low */
 		while (PINB & (1 << PINB3))
 		{
 			wdt_init(WDTO_250MS);
@@ -180,8 +194,6 @@ int main(void)
 
 		/* and set back the button pressed variable to false */
 		g_wakeupMode = WAKEUP_MODE_NEXTSTEP;
-		/* set PINB4 to LOW (leave switch image mode) */
-		//PORTB &= 0b11101111;
 		
 		/* now we also wait for PinB1 which is the busy pin of the spectra display */
 		while (PINB & (1 << PINB1))
@@ -200,21 +212,30 @@ int main(void)
 
 /* Interrupt routine executed when button is pressed */
 ISR(PCINT0_vect)	     
-{			     
-	/* set the wake up mode to switch image */
-	g_wakeupMode = WAKEUP_MODE_SWITCHIMAGE;
+{	
+	/* do something if this is the very first interrupt. This is required to avoid multiple interrupts. Especially when button
+	   is released, there might be additional HIGH->LOW transitions which will disturb detecting the button down time */
+	if (!g_interuptRunning)
+	{
 
-        /* now wait till button is released. If this takes more than a second, we are in Go Online mode /*
-	/* count the number of 100ms wait time */
-	int i = 0;
-        while (!(PINB & 1))
-        {
-            _delay_ms(100);
-            i++;
-        }
-        /* if we waited more than 10 times 100ms, i.e. one second, we are on Go Online mode */
-        if (i>=10)
-            g_wakeupMode = WAKEUP_MODE_GOONLINE;
+		/* interrupt running. Will only be reset after system woke up, see SleepLong method */			     
+		g_interuptRunning = 1;
+	
+		/* set the wake up mode to switch image */
+		g_wakeupMode = WAKEUP_MODE_SWITCHIMAGE;
+
+		/* now wait till button is released. If this takes more than a second, we are in Go Online mode */
+		/* count the number of 100ms wait time */
+		int i = 0;
+		while (!(PINB & 1))
+		{
+			_delay_ms(100);
+			i++;
+		}
+		/* if we waited more than 10 times 100ms, i.e. one second, we are on Go Online mode */
+		if (i>=10)
+			g_wakeupMode = WAKEUP_MODE_GOONLINE;
+	}
 }
 
 
