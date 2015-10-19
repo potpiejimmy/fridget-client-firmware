@@ -199,13 +199,15 @@ void loop()
         execLen = EEPROM.read(EEPROM_ENTRY_PROGRAM_LENGTH);
         execNo = EEPROM.read(EEPROM_ENTRY_PROGRAM_COUNTER);
         
-        // go to next OP (increase program counter))
-        subStepCount = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo) - '0';
-        execNo += subStepCount + 5;
+        if (execNo < execLen) {
+            // go to next OP (increase program counter))
+            subStepCount = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo) - '0';
+            execNo += subStepCount + 5;
 
-        _DEBUG(String("Increasing execNo to ") + execNo);
-        EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, execNo);
-        EEPROM.write(EEPROM_ENTRY_PROGRAM_SUBSTEP, (uint8_t)0); // reset substep counter
+            _DEBUG(String("Increasing execNo to ") + execNo);
+            EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, execNo);
+            EEPROM.write(EEPROM_ENTRY_PROGRAM_SUBSTEP, (uint8_t)0); // reset substep counter
+        }
         
         _DEBUG(String("ExecLen=")+execLen+", ExecNo="+execNo);
         if (execNo >= execLen) {
@@ -372,6 +374,9 @@ void onOnline()
     // online - reset connection failure counter
     EEPROM.write(EEPROM_ENTRY_ERROR_COUNTER, (uint8_t)0);
     
+    EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, (uint8_t)0); // reset program counter
+    EEPROM.write(EEPROM_ENTRY_PROGRAM_SUBSTEP, (uint8_t)0); // reset substep counter
+    
     if (connectMode == USER_CONNECT_MODE_CLOUD_ON ||
         // Also connect to cloud if firmware differs from server firmware:
         strcmp(getServerParam("firmware", FRIDGET_FIRMWARE_VERSION), FRIDGET_FIRMWARE_VERSION))
@@ -384,19 +389,20 @@ void onOnline()
         /** register clear credentials for cloud - used by factory reset operation */
         Particle.function("clearCredentials", clearCredentials);
     
+        /** clear current program on cloud connect */
+        EEPROM.write(EEPROM_ENTRY_PROGRAM_LENGTH, (uint8_t)0);
+        
         return;
     }
     
     // FOR DEBUGGING VOLTAGE ONLY:
     reportVoltageToServer();
     
-    const char* program = getServerParam("exec", "1A0000");
+    const char* program = getServerParam("exec", "1A0002");
     uint8_t programSize = strlen(program);
     _DEBUG(String("Received program: ") + program);
  
     EEPROM.write(EEPROM_ENTRY_PROGRAM_LENGTH, (uint8_t)programSize);
-    EEPROM.write(EEPROM_ENTRY_PROGRAM_COUNTER, (uint8_t)0); // reset program counter
-    EEPROM.write(EEPROM_ENTRY_PROGRAM_SUBSTEP, (uint8_t)0); // reset substep counter
     for (int i=0; i<programSize; i++) EEPROM.write(EEPROM_ENTRY_PROGRAM_START+i, program[i]);
 }
 
