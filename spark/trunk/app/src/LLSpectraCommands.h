@@ -21,7 +21,7 @@
 // See spec ApplicationNote_EPD441_Spectra_v01.pdf in common/docs/Specifications
 namespace com_myfridget
 {
-    void ShowImage(LLInputStream* in);
+    void ShowImage(LLInputStream* in, uint8_t step, uint8_t count);
 	float ReadBatteryVoltage();
 }
 

@@ -101,7 +101,7 @@ void blinkLED(int on, int off);
 void onOnline();
 void executeOp();
 void enterPowerSaveMode();
-void updateDisplay(uint8_t imgNo, bool stayOnline);
+void updateDisplay(uint8_t imgNo, bool stayOnline, uint8_t step, uint8_t count);
 void powerDown(uint16_t interval);
 void handleConnectFailure();
 void flashImages();
@@ -231,7 +231,7 @@ void loop()
             // Note: if no credentials are available, the loop function
             // won't be called until smart config process completed, so
             // we have to update the display now:
-            updateDisplay(1, true); // show setup image (B))
+            updateDisplay(1, true, 0, 0); // show setup image (B))
         }
         break;
 
@@ -274,7 +274,7 @@ void loop()
         break;
     
     case USER_STATE_FACTORY_RESET:
-        updateDisplay(0, false); // 0 == A == off-screen
+        updateDisplay(0, false, 0, 0); // 0 == A == off-screen
         powerDown(0xFFFF); // and off forever
         break;
     }
@@ -288,7 +288,7 @@ void handleConnectFailure()
     if (errorCounter < 255)
         EEPROM.write(EEPROM_ENTRY_ERROR_COUNTER, errorCounter + 1);
     
-    updateDisplay(2, false); // 2 == C == connection error screen
+    updateDisplay(2, false, 0, 0); // 2 == C == connection error screen
     //power down forever
     powerDown(0xFFFF);
  }
@@ -412,7 +412,7 @@ void executeOp()
         char opName = EEPROM.read(EEPROM_ENTRY_PROGRAM_START+execNo+subStepNo);
         _DEBUG(String("Execute OP ") + opName);
     
-        updateDisplay(opName - 'A', false);
+        updateDisplay(opName - 'A', false, subStepNo, subStepCount);
     
         subStepNo++;
         if (subStepNo >= subStepCount) subStepNo = 0;
@@ -453,7 +453,7 @@ void enterPowerSaveMode()
 #endif
 }
 
-void updateDisplay(uint8_t imgNo, bool stayOnline)
+void updateDisplay(uint8_t imgNo, bool stayOnline, uint8_t step, uint8_t count)
 {
     const int decodeBufSize = 1024;
     unsigned char decodeBuf[decodeBufSize];
@@ -483,7 +483,7 @@ void updateDisplay(uint8_t imgNo, bool stayOnline)
     if (!stayOnline) enterPowerSaveMode();
     
 #ifdef EPD_TCON_CONNECTED
-    ShowImage(&rleIn);
+    ShowImage(&rleIn, step, count);
 #else
 //#ifdef _SERIAL_DEBUGGING_
 //    for (int i=0; i<60; i++)

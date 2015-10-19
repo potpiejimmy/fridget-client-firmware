@@ -33,7 +33,7 @@ namespace com_myfridget
         const int SIZE_OF_LINE = 50;
 #endif        
 
-    void ShowImage(LLInputStream* in)
+    void ShowImage(LLInputStream* in, uint8_t step, uint8_t count)
     {
         InitializeSPI();
        // delay(1000); //TODO: unclear how much time we need after SPI initialization. Maybe 0 is ok. To be tried....
