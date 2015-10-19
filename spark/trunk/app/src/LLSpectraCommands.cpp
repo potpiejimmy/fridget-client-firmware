@@ -18,7 +18,7 @@ namespace com_myfridget
     void InitializeSPI();
     void UninitializeSPI();
 	int GetBatteryLoad();
-	void InitializeOverlay();
+	void InitializeOverlay(uint8_t step, uint8_t count);
 	
     /* 9 lines red. 9 lines black. 2 bytes for battery, 5 bytes for image substep (max 5 images) */
 	byte overlayRaster[18][7];
@@ -44,7 +44,7 @@ namespace com_myfridget
         digitalWrite(TC_CS, HIGH);
         // wait the minimal time of 50ms according to spec before starting the command sequence with CS=LOW
         delayRealMicros(50000); //min 50
-		InitializeOverlay();
+		InitializeOverlay(step, count);
         digitalWrite(TC_CS, LOW);
         //wait the minimal time of 1ms according to spec
         delayRealMicros(1000);  //min 1
@@ -168,7 +168,7 @@ namespace com_myfridget
 		return 14.7/10 * (3.27 * analogRead(BATTERY)) / ((float) 4095);
 	}
 
-	void InitializeOverlay()
+	void InitializeOverlay(uint8_t step, uint8_t count)
 	{
 		// overlay is as follows ('-'= transparent, 'B'=black, ' '=white, '='=red) :
         //
@@ -264,7 +264,7 @@ namespace com_myfridget
         }
         
         /* now create the substep overlay */
-        for (int z=0; z< SUBSTEPS_TOTAL; z++)
+        for (int z=0; z<count; z++)
         {
             /* first shift all to the right */
             for (int j=6; j>1; j--)
@@ -284,7 +284,7 @@ namespace com_myfridget
                 }
                 if (i==1 || i==2 || i==6 || i==7 || i==10 || i==11 || i==15 || i==16)
                 {
-                    if (z==SUBSTEP)
+                    if (z==step)
                         overlayPic[i][2]=0b11111110;
                     else
                         overlayPic[i][2]=0b00000000;
@@ -292,7 +292,7 @@ namespace com_myfridget
                 }
                 if (i==3 || i==4 || i==5)
                 {
-                    if (z==SUBSTEP)
+                    if (z==step)
                         overlayPic[i][2]=0b11111110;
                     else
                         overlayPic[i][2]=0b00111000;
@@ -300,7 +300,7 @@ namespace com_myfridget
                 }
                 if (i==12 || i==13 || i==14)
                 {
-                    if (z==SUBSTEP)
+                    if (z==step)
                         overlayPic[i][2]=0b11000110;
                     else
                         overlayPic[i][2]=0b00000000;
