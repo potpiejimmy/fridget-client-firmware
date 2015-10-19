@@ -29,9 +29,6 @@ volatile int g_wakeupMode;
 /* global variable that holds the number of cycles to sleep in SleepLong method */
 volatile uint16_t g_cyclesToSleep;
 
-/* global boolean variable saying if currently a button interrupt is running (button was pressed) */
-volatile int g_interuptRunning;
-
 /* initialize the watchdog */
 void wdt_init(uint8_t timeout) {
 	/* globally disable all interrupts */
@@ -81,8 +78,21 @@ void SleepLong()
 		/* and sleep */
 		sleep_now();
 		/* if woke up by button press, then remember remaining cycles and leave sleep loop */
-		if (g_wakeupMode != WAKEUP_MODE_NEXTSTEP) 
+		if (g_wakeupMode == WAKEUP_MODE_SWITCHIMAGE) 
 		{
+			/* now wait till button is released. If this takes more than a second, we are in Go Online mode */
+			/* count the number of 100ms wait time */
+			/* idea: if ever due to button bouncing the long button press time is not correctly detected, we could add a _delay_ms(20) here */
+			int i = 0;
+			while (!(PINB & 1))
+			{
+				_delay_ms(100);
+				i++;
+			}
+			/* if we waited more than 10 times 100ms, i.e. one second, we are on Go Online mode */
+			if (i>=10)
+				g_wakeupMode = WAKEUP_MODE_GOONLINE;
+
 			/* set sleep time to remaining cycles minus 2 (~16s for display update time) */
 			g_cyclesToSleep = g_cyclesToSleep-i-2;
 			/* leave the for loop */
@@ -92,8 +102,6 @@ void SleepLong()
 
 	/* disable interrupts on pin. this line is needed when no button is pressed during sleep time. */
 	PCMSK = 0b00000000;
-	/* interrupt (if there was one), is now handled */
-	g_interuptRunning = 0;
 }
 
 /* Get the number of sleep cycles from spark/photon */
@@ -163,8 +171,6 @@ int main(void)
 	g_wakeupMode = WAKEUP_MODE_NEXTSTEP;
 	/* initialize the sleep cycles with zero */
 	g_cyclesToSleep = 0;
-	/* initialize to 0, no interrupt running */
-	g_interuptRunning = 0;
 
 	/* disable power and wait three seconds to ensure stable start of LDO and spark after three seconds
 	   this time can surely be reduced, but it will only play a role after plugging system to battery */
@@ -216,30 +222,13 @@ ISR(PCINT0_vect)
 	/* otherwise too many interrupts will occur and disturb button down time detection */
 	/* and sometimes seem to produce interrupts overloads (attiny stops working completely) */
 	PCMSK = 0b00000000;
-
-	/* do something if this is the very first interrupt. This is required to avoid multiple interrupts. Especially when button
-	   is released, there might be additional HIGH->LOW transitions which will disturb detecting the button down time */
-	if (!g_interuptRunning)
-	{
-
-		/* interrupt running. Will only be reset after system woke up, see SleepLong method */			     
-		g_interuptRunning = 1;
 	
-		/* set the wake up mode to switch image */
-		g_wakeupMode = WAKEUP_MODE_SWITCHIMAGE;
+	/* set the wake up mode to switch image */
+	g_wakeupMode = WAKEUP_MODE_SWITCHIMAGE;
 
-		/* now wait till button is released. If this takes more than a second, we are in Go Online mode */
-		/* count the number of 100ms wait time */
-		int i = 0;
-		while (!(PINB & 1))
-		{
-			_delay_ms(100);
-			i++;
-		}
-		/* if we waited more than 10 times 100ms, i.e. one second, we are on Go Online mode */
-		if (i>=10)
-			g_wakeupMode = WAKEUP_MODE_GOONLINE;
-	}
+	/* clear PCIF flag: it might appear that interrupt has occured during this routine, but we do not want this routine to be executed twice
+	   so we manually set back the flag */
+	GIFR &= ~(1<<PCIF);
 }
 
 
