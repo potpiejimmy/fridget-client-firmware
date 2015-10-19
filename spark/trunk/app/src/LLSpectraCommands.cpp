@@ -314,7 +314,7 @@ namespace com_myfridget
 	* y = line number
 	* x = byte number in line
 	*/
-	byte getOverlay(byte arr[][2], int x, int y, byte neutralValue)
+	byte getOverlay(byte arr[][7], int x, int y, byte neutralValue)
 	{
 		int yOverlay;
 		int offset = 0;
