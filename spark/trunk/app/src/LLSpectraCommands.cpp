@@ -299,7 +299,7 @@ namespace com_myfridget
                     overlayPic[i][5]=0b00000000;
                     continue;
                 }
-                if ((i>=1 && i<=4) || (i>=11 && i<=14) || (i>=17 && i<=20) || (i>=27 && i<=30))
+                if ((i>=1 && i<=3) || (i>=12 && i<=14) || (i>=17 && i<=19) || (i>=28 && i<=30))
                 {
                     if (z==step)
                     {
@@ -313,7 +313,7 @@ namespace com_myfridget
                     }
                     continue;                
                 }
-                if (i>=5 && i<=10)
+                if (i>=4 && i<=11)
                 {
                     if (z==step)
                     {
@@ -322,17 +322,17 @@ namespace com_myfridget
                     }
                     else
                     {
-                        overlayPic[i][4]=0b00000111;
-                        overlayPic[i][5]=0b11100000;
+                        overlayPic[i][4]=0b00001111;
+                        overlayPic[i][5]=0b11110000;
                     }
                     continue;                
                 }
-                if (i>=21 && i<=26)
+                if (i>=20 && i<=27)
                 {
                     if (z==step)
                     {
-                        overlayPic[i][4]=0b01111000;
-                        overlayPic[i][5]=0b00011110;
+                        overlayPic[i][4]=0b01110000;
+                        overlayPic[i][5]=0b00001110;
                     }
                     else
                     {
