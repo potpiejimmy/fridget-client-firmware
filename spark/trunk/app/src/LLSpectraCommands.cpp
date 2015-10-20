@@ -20,11 +20,11 @@ namespace com_myfridget
 	int GetBatteryLoad();
 	void InitializeOverlay(uint8_t step, uint8_t count);
 	
-    /* 9 lines red. 9 lines black. 2 bytes for battery, 5 bytes for image substep (max 5 images) */
-	byte overlayRaster[18][7];
-	byte overlayPic[18][7];
+    /* 16 lines red. 16 lines black. 2 bytes for battery, 2 bytes empty distance, 10 bytes for image substep (max 5 images) */
+	byte overlayRaster[32][14];
+	byte overlayPic[32][14];
 	
-	byte getOverlay(byte arr[][7], int x, int y, byte neutralValue);
+	byte getOverlay(byte arr[][14], int x, int y, byte neutralValue);
 
 #if EPD_SCREEN_TYPE==1
         const int NUMBER_OF_LINES = 1600;
@@ -170,16 +170,23 @@ namespace com_myfridget
 
 	void InitializeOverlay(uint8_t step, uint8_t count)
 	{
-		// overlay is as follows ('-'= transparent, 'B'=black, ' '=white, '='=red) :
-        //
-		// BBBBBBBBBBBBB           BBBBBBB                
-		// BBBBBBBBBBBBB           BBBBBBB                
-		// BB=====     BB    ===   BB===BB   ===     ===
-		// BB=====     BB    ===   BB===BB   ===     ===
-		// BB=====     BB    ===   BB===BB   ===     ===
-		// BBBBBBBBBBBBB           BBBBBBB                
-		// BBBBBBBBBBBBB           BBBBBBB                
-        //
+		// overlay is as follows ('-'= transparent, 'B'=black, ' '=white, '='=red, | = Byte border) :
+        //--------|--------|--------|--------|        |        |        |        |        |        |        |        |--------|--------|
+        //--------|--------|--------|--------|        |        | BBBBBBB|BBBBBBB |        |        |        |        |--------|--------|
+        //--------|--------|--------|--------|        |        | BBBBBBB|BBBBBBB |        |        |        |        |--------|--------|
+        //--------|--------|--------|--------|        |        | BBBBBBB|BBBBBBB |        |        |        |        |--------|--------|
+        //--------|--------|--------|--------|        |        | BBBBBBB|BBBBBBB |        |        |        |        |--------|--------|
+        //--------|--------|--------|--------|     ===|===     | BBBB===|===BBBB |     ===|===     |     ===|===     |--------|--------|
+        //--------|--------|--------|--------|     ===|===     | BBBB===|===BBBB |     ===|===     |     ===|===     |--------|--------|
+        //        |        |--------|--------|     ===|===     | BBBB===|===BBBB |     ===|===     |     ===|===     |--------|--------|
+		// BBBBBBB|BBBBBB  |--------|--------|     ===|===     | BBBB===|===BBBB |     ===|===     |     ===|===     |--------|--------|
+		// BBBBBBB|BBBBBB  |--------|--------|     ===|===     | BBBB===|===BBBB |     ===|===     |     ===|===     |--------|--------|
+		// BB=====|     BB |--------|--------|     ===|===     | BBBB===|===BBBB |     ===|===     |     ===|===     |--------|--------|
+		// BB=====|     BB |--------|--------|        |        | BBBBBBB|BBBBBBB |        |        |        |        |--------|--------|
+		// BB=====|     BB |--------|--------|        |        | BBBBBBB|BBBBBBB |        |        |        |        |--------|--------|
+		// BBBBBBB|BBBBBB  |--------|--------|        |        | BBBBBBB|BBBBBBB |        |        |        |        |--------|--------|
+		// BBBBBBB|BBBBBB  |--------|--------|        |        | BBBBBBB|BBBBBBB |        |        |        |        |--------|--------|
+        //        |        |--------|--------|        |        |        |        |        |        |        |        |--------|--------|
 		// the number of = corresponds to the batteryLoad.
 		int batteryLoad = GetBatteryLoad();
 		// fill according to batteryLoad
@@ -223,39 +230,46 @@ namespace com_myfridget
 					fillRight = 0;
 					break;
 		}					
-        /* overlay raster needed for transparency. initialize raster to 0 for the first three bytes (2x battery, 1x substep.) rest is transparent */
-        for (int i=0; i<18; i++)
+        /* initialize raster and overlay pic */
+        /* first make all transparent */
+        for (int i=0; i<32; i++)
+            for (int j=0; j<14; j++)
+                overlayRaster[i][j]=0b11111111;
+        /* now reserve non-transparent zone for battery overlay */
+        for (int i=7; i<16; i++)
             for (int j=0; j<2; j++)
                 overlayRaster[i][j]=0b00000000;
-        for (int i=0; i<18; i++)
-            for (int j=2; j<7; j++)
-            {
-                overlayRaster[i][j]=0b11111111;
+        for (int i=23; i<32; i++)
+            for (int j=0; j<2; j++)
+                overlayRaster[i][j]=0b00000000;
+        /* initialize overlay pic to all white */
+        for (int i=0; i<32; i++)
+            for (int j=0; j<14; j++)
                 overlayPic[i][j]=0b00000000;
-            }
         
-        /* overlay pic red or black for battery symbol */
-        for (int i=0; i<18; i++)
+        /* now create the real pics */
+        /* overlay pic red and black for battery symbol */
+        for (int i=0; i<32; i++)
         {
-            if (i==0 || i==8 || i==9 || i==17)
+            if ((i>=0 && i<=7) || (i>=15 && i<=23) || i==31)
             {
                 overlayPic[i][0]=0b00000000;
                 overlayPic[i][1]=0b00000000;           
                 continue;
             }
-            if (i==1 || i==2 || i==6 || i==7 || i==10 || i==11 || i==15 || i==16)
+            if (i==8 || i==9 || i==13 || i==14 || i==24 || i==25 || i==29 || i==30)
             {
                 overlayPic[i][0]=0b01111111;
                 overlayPic[i][1]=0b11111100;
                 continue;                
             }
-            if (i==3 || i==4 || i==5)
+            if (i==10 || i==11 || i==12)
             {
                 overlayPic[i][0]=0b01100000 | fillLeft;
                 overlayPic[i][1]=0b00000110 | fillRight;
                 continue;
             }
-            if (i==12 || i==13 || i==14)
+            if (i==26 || i==27 || i==28)
             {
                 overlayPic[i][0]=0b01100000;
                 overlayPic[i][1]=0b00000110;
@@ -266,44 +280,65 @@ namespace com_myfridget
         /* now create the substep overlay */
         for (int z=0; z<count; z++)
         {
-            /* first shift all to the right */
-            for (int j=6; j>1; j--)
-                for (int i=0; i<18; i++)
+            /* first shift all to the right by two bytes*/
+            for (int j=13; j>5; j--)
+                for (int i=0; i<32; i++)
                 {
-                    overlayPic[i][j]=overlayPic[i][j-1];
-                    overlayRaster[i][j]=overlayRaster[i][j-1];
+                    overlayPic[i][j]=overlayPic[i][j-2];
+                    overlayRaster[i][j]=overlayRaster[i][j-2];
                 }
          
             /* and now set byte correctly */
-            for (int i=0; i<18; i++)
+            for (int i=0; i<32; i++)
             {
-                if (i==0 || i==8 || i==9 || i==17)
+                overlayRaster[i][4]=0b00000000;
+                overlayRaster[i][5]=0b00000000;
+                if (i==0 || i==15 || i==16 || i==31)
                 {
-                    overlayPic[i][2]=0b00000000;
+                    overlayPic[i][4]=0b00000000;
+                    overlayPic[i][5]=0b00000000;
                     continue;
                 }
-                if (i==1 || i==2 || i==6 || i==7 || i==10 || i==11 || i==15 || i==16)
+                if ((i>=1 && i<=4) || (i>=11 && i<=14) || (i>=17 && i<=20) || (i>=27 && i<=30))
                 {
                     if (z==step)
-                        overlayPic[i][2]=0b11111110;
+                    {
+                        overlayPic[i][4]=0b01111111;
+                        overlayPic[i][5]=0b11111110;
+                    }
                     else
-                        overlayPic[i][2]=0b00000000;
+                    {
+                        overlayPic[i][4]=0b00000000;
+                        overlayPic[i][5]=0b00000000;
+                    }
                     continue;                
                 }
-                if (i==3 || i==4 || i==5)
+                if (i>=5 && i<=10)
                 {
                     if (z==step)
-                        overlayPic[i][2]=0b11111110;
+                    {
+                        overlayPic[i][4]=0b01111111;
+                        overlayPic[i][5]=0b11111110;
+                    }
                     else
-                        overlayPic[i][2]=0b00111000;
+                    {
+                        overlayPic[i][4]=0b00000111;
+                        overlayPic[i][5]=0b11100000;
+                    }
                     continue;                
                 }
-                if (i==12 || i==13 || i==14)
+                if (i>=21 && i<=26)
                 {
                     if (z==step)
-                        overlayPic[i][2]=0b11000110;
+                    {
+                        overlayPic[i][4]=0b01111000;
+                        overlayPic[i][5]=0b00011110;
+                    }
                     else
-                        overlayPic[i][2]=0b00000000;
+                    {
+                        overlayPic[i][4]=0b00000000;
+                        overlayPic[i][5]=0b00000000;
+                    }
                     continue;                
                 }
             }
@@ -314,23 +349,23 @@ namespace com_myfridget
 	* y = line number
 	* x = byte number in line
 	*/
-	byte getOverlay(byte arr[][7], int x, int y, byte neutralValue)
+	byte getOverlay(byte arr[][14], int x, int y, byte neutralValue)
 	{
 		int yOverlay;
 		int offset = 0;
 		if (y<(NUMBER_OF_LINES/2))
 		{
-			yOverlay = y-NUMBER_OF_LINES/2+11;
+			yOverlay = y-NUMBER_OF_LINES/2+18;
 		}
 		else
 		{
-			yOverlay = y-NUMBER_OF_LINES+11;
-			offset += 9;			
+			yOverlay = y-NUMBER_OF_LINES+18;
+			offset += 16;			
 		}
-		if (yOverlay < 0 || yOverlay > 8) return neutralValue;
+		if (yOverlay < 0 || yOverlay > 15) return neutralValue;
 		else 
 		{
-			if (x>6) return neutralValue;
+			if (x>13) return neutralValue;
 			else return arr[yOverlay+offset][x];
 		}		
 	}
