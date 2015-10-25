@@ -67,8 +67,8 @@ void SleepLong()
 	/* enable pin change interrupt on pin pcint0 only */
 	PCMSK = (1<<PCINT0);
 	
-	/* for safety: if number of cycles is <= 0, we set to 1. Otherwise the power will be turned off and immediately on (bad). */
-	if (g_cyclesToSleep <= 0) g_cyclesToSleep = 1;
+	/* for safety: if number of cycles is = 0, we set to 1. Otherwise the power will be turned off and immediately on (bad). */
+	if (g_cyclesToSleep == 0) g_cyclesToSleep = 1;
 	
 	/* go to sleep for the number of cycles given by spark/photon */
 	for (uint16_t i=0 ; i<g_cyclesToSleep; i++)
@@ -94,7 +94,7 @@ void SleepLong()
 				g_wakeupMode = WAKEUP_MODE_GOONLINE;
 
 			/* set sleep time to remaining cycles minus 2 (~16s for display update time) */
-			g_cyclesToSleep = g_cyclesToSleep-i-2;
+			g_cyclesToSleep = (g_cyclesToSleep-i)>2?g_cyclesToSleep-i-2:1;
 			/* leave the for loop */
 			break;
 		}
