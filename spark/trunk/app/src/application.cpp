@@ -454,8 +454,13 @@ void enterPowerSaveMode()
     
     // runtertakten:
 #ifdef EPD_TCON_CONNECTED
+#if EPD_SCREEN_TYPE==1
+    RCC_HCLKConfig(RCC_SYSCLK_Div2);
+    _clockDivisor=2;
+#else
     RCC_HCLKConfig(RCC_SYSCLK_Div8);
     _clockDivisor=8;
+#endif
 #endif
 }
 

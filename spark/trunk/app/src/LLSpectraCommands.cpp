@@ -114,9 +114,9 @@ namespace com_myfridget
 		//
 		// ugly code here: unclear why/how __clockDivisor comes into game here:
 #if EPD_SCREEN_TYPE==1
-        SPI.setClockDivider(SPI_CLOCK_DIV2);
+        if (_clockDivisor == 1) SPI.setClockDivider(SPI_CLOCK_DIV2);
 #else
-       // SPI.setClockDivider(_clockDivisor == 1 ? SPI_CLOCK_DIV16 : SPI_CLOCK_DIV2);
+        SPI.setClockDivider(_clockDivisor == 1 ? SPI_CLOCK_DIV16 : SPI_CLOCK_DIV2);
 #endif
         // setting bit order to MSBFirst according the TCon module spec
         SPI.setBitOrder(MSBFIRST);
